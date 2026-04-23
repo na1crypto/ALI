@@ -1,0 +1,48 @@
+:root { --primary: #4f46e5; --success: #10b981; --dark: #0f172a; --bg: #f8fafc; }
+body { background-color: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; }
+
+/* NAVBAR */
+.pos-navbar { background: #ffffff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); padding: 10px 20px; }
+
+/* MAHSULOTLAR LISTI */
+.product-card { border: 2px solid transparent; border-radius: 16px; transition: 0.2s; cursor: pointer; background: #fff; overflow: hidden; }
+.product-card:active { transform: scale(0.95); }
+.product-card:hover { border-color: var(--primary); box-shadow: 0 10px 20px rgba(79, 70, 229, 0.15); }
+.price-tag { font-size: 1.1rem; font-weight: 800; color: var(--primary); }
+.stock-badge { position: absolute; top: 10px; right: 10px; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 8px; }
+.products-container { height: calc(100vh - 150px); overflow-y: auto; padding-right: 10px; scrollbar-width: thin; }
+
+/* SAVAT QISMI */
+.cart-panel { height: calc(100vh - 80px); background: #ffffff; box-shadow: -5px 0 20px rgba(0,0,0,0.03); display: flex; flex-direction: column; }
+.cart-header { padding: 20px; border-bottom: 2px dashed #e2e8f0; }
+.cart-items { flex-grow: 1; overflow-y: auto; padding: 15px; }
+.cart-footer { padding: 20px; background: #f8fafc; border-top: 2px solid #e2e8f0; }
+
+.cart-item { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; margin-bottom: 10px; transition: 0.2s; }
+.cart-item:hover { border-color: #cbd5e1; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
+.qty-btn { width: 30px; height: 30px; border-radius: 8px; border: none; background: #f1f5f9; color: var(--dark); font-weight: bold; }
+.qty-btn:hover { background: #e2e8f0; }
+
+/* QIDIRUV & TUGMALAR */
+.search-box { border-radius: 14px; border: 2px solid #e2e8f0; height: 50px; font-size: 16px; font-weight: 600; padding-left: 20px; box-shadow: none !important; }
+.search-box:focus { border-color: var(--primary); }
+.btn-pay { background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 14px; height: 60px; font-size: 20px; font-weight: 800; letter-spacing: 1px; transition: 0.3s; }
+.btn-pay:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3); color: white; }
+
+/* MODAL DIZAYNI */
+.pay-modal-content { border-radius: 24px; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.2); }
+.pay-method-card { border: 2px solid #e2e8f0; border-radius: 16px; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; }
+.pay-method-card.active { border-color: var(--primary); background: #eff6ff; }
+.pay-method-card i { font-size: 32px; margin-bottom: 10px; color: #64748b; }
+.pay-method-card.active i { color: var(--primary); }
+.calc-input { font-size: 28px; font-weight: 800; text-align: right; height: 70px; border-radius: 16px; border: 2px solid #cbd5e1; }
+.calc-input:focus { border-color: var(--primary); }
+
+/* CHEK DIZAYNI */
+#receipt { display: none; }
+@media print {
+    body * { visibility: hidden; }
+    #receipt, #receipt * { visibility: visible; }
+    #receipt { display: block !important; position: absolute; left: 0; top: 0; width: 100%; padding: 5px; font-family: 'Courier New', monospace; color: #000; font-size: 12px; }
+    .no-print { display: none !important; }
+}
