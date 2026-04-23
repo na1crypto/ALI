@@ -1,0 +1,6 @@
+.env
+*.log
+*.cache
+webcache/
+.DS_Store
+Thumbs.db
