@@ -13,10 +13,10 @@ $xato = "";
 // Agar foydalanuvchi allaqachon tizimga kirgan bo'lsa, avtomat yo'naltirish
 if (isset($_SESSION['user_id'])) {
     if ($_SESSION['role'] == 'admin' || $_SESSION['role'] == 'superadmin') {
-        header("Location: ../admin/dashboard.php");
+        header("Location: /admin/dashboard.php");
         exit;
     } else if ($_SESSION['role'] == 'sotuvchi') {
-        header("Location: ../sotuvchi/dashboard.php");
+        header("Location: /sotuvchi/dashboard.php");
         exit;
     }
 }
@@ -43,10 +43,10 @@ if (isset($_POST['kirish'])) {
 
             // Ruliga qarab yo'naltirish
             if ($_SESSION['role'] == 'admin' || $_SESSION['role'] == 'superadmin') {
-                header("Location: ../admin/dashboard.php");
+                header("Location: /admin/dashboard.php");
                 exit;
             } else if ($_SESSION['role'] == 'sotuvchi') {
-                header("Location: ../sotuvchi/dashboard.php");
+                header("Location: /sotuvchi/dashboard.php");
                 exit;
             } else {
                 $xato = "❌ Sizga rol biriktirilmagan!";
