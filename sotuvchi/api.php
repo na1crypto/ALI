@@ -93,13 +93,10 @@ if ($action == 'complete_sale') {
         elseif(isset($_SESSION['id'])) { $user_id = $_SESSION['id']; }
 
         // --- 1-QADAM: `sales` (Chek) jadvaliga yozish ---
-        $sale_query = "INSERT INTO sales (user_id, total_price, payment_method) VALUES ('$user_id', '$final_price', '$payment_method')";
+        $next_sale_id = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COALESCE(MAX(id),0)+1 AS nid FROM sales"))['nid'];
+        $sale_query = "INSERT INTO sales (id, user_id, total_price, payment_method) VALUES ('$next_sale_id', '$user_id', '$final_price', '$payment_method')";
         if (!mysqli_query($conn, $sale_query)) {
-            // Agar jadval strukturasi eski bo'lsa zaxira varianti
-            $sale_query_alt = "INSERT INTO sales (user_id, total_price) VALUES ('$user_id', '$final_price')";
-            if(!mysqli_query($conn, $sale_query_alt)) {
-                throw new Exception("Sales jadvaliga yozib bo'lmadi: " . mysqli_error($conn));
-            }
+            throw new Exception("Sales jadvaliga yozib bo'lmadi: " . mysqli_error($conn));
         }
         
         // Baza o'zi bergan Chek raqamini (ID) olamiz
@@ -111,13 +108,10 @@ if ($action == 'complete_sale') {
             $qty = (int)$item['count'];
             $price = (float)$item['price'];
 
-            $item_query = "INSERT INTO sale_items (sale_id, product_id, quantity, unit_price) VALUES ('$sale_id', '$p_id', '$qty', '$price')";
+            $next_item_id = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COALESCE(MAX(id),0)+1 AS nid FROM sale_items"))['nid'];
+            $item_query = "INSERT INTO sale_items (id, sale_id, product_id, quantity, unit_price) VALUES ('$next_item_id', '$sale_id', '$p_id', '$qty', '$price')";
             if (!mysqli_query($conn, $item_query)) {
-                // Zaxira yozish varianti
-                $item_query_alt = "INSERT INTO sale_items (sale_id, product_id, quantity, price) VALUES ('$sale_id', '$p_id', '$qty', '$price')";
-                if(!mysqli_query($conn, $item_query_alt)) {
-                     throw new Exception("Sale_items ga yozishda muammo: " . mysqli_error($conn));
-                }
+                throw new Exception("Sale_items ga yozishda muammo: " . mysqli_error($conn));
             }
 
             // --- 3-QADAM: OMBORDAN TOVARNI KEMAYTIRISH ---
