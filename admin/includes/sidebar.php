@@ -185,6 +185,18 @@ $admin_base = $project_base . "/admin";
 .badge-manager    { background: #FFF9E6; color: #FFA800; }
 
 /* ================================================
+   DEFAULT BODY OFFSET
+================================================ */
+body {
+    padding-left: 90px;
+    transition: padding-left 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+.bento-main, .main-content, .page-wrapper, .page-content {
+    margin-left: 0 !important;
+    transition: margin-left 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ================================================
    LOGOUT MODAL
 ================================================ */
 .logout-overlay {
@@ -370,12 +382,7 @@ $admin_base = $project_base . "/admin";
     if(!sb) return;
     var t = 'transition:margin-left 0.4s cubic-bezier(0.4,0,0.2,1),padding-left 0.4s cubic-bezier(0.4,0,0.2,1)';
     function pushContent(open){
-        // body padding (dashboard style)
-        document.body.style.transition = 'padding-left 0.4s cubic-bezier(0.4,0,0.2,1)';
-        document.body.style.paddingLeft = open ? '270px' : '';
-        // bento-main / main-content wrapper style pages
-        var bm = document.querySelector('.bento-main,.main-content,.page-wrapper,.page-content');
-        if(bm){ bm.style.transition = 'margin-left 0.4s cubic-bezier(0.4,0,0.2,1)'; bm.style.marginLeft = open ? '270px' : '90px'; }
+        document.body.style.paddingLeft = open ? '270px' : '90px';
     }
     sb.addEventListener('mouseenter', function(){ pushContent(true); });
     sb.addEventListener('mouseleave', function(){ pushContent(false); });
