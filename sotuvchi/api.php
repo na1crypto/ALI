@@ -109,7 +109,8 @@ if ($action == 'complete_sale') {
             $price = (float)$item['price'];
 
             $next_item_id = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COALESCE(MAX(id),0)+1 AS nid FROM sale_items"))['nid'];
-            $item_query = "INSERT INTO sale_items (id, sale_id, product_id, quantity, unit_price) VALUES ('$next_item_id', '$sale_id', '$p_id', '$qty', '$price')";
+            $total_item_price = $price * $qty;
+            $item_query = "INSERT INTO sale_items (id, sale_id, product_id, price, quantity, unit_price) VALUES ('$next_item_id', '$sale_id', '$p_id', '$total_item_price', '$qty', '$price')";
             if (!mysqli_query($conn, $item_query)) {
                 throw new Exception("Sale_items ga yozishda muammo: " . mysqli_error($conn));
             }
