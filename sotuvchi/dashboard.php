@@ -474,7 +474,8 @@ function confirmCheckout() {
                     renderCart();
                     $('#discountInput').val(0);
                     if(isOptomMode) toggleOptomMode();
-                    $('#searchProduct').val('').focus();
+                    // Mahsulot kartochkalarini yangilash (miqdor o'zgarishi uchun)
+                    location.reload();
                 }, 800);
             } else alert("Xato: " + res.message);
         }, error: function() { alert("Server xatosi!"); }
