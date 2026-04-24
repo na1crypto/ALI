@@ -9,6 +9,9 @@ if (isset($_SESSION['user_id'])) {
     exit;
 }
 
+// role ustuniga 'mijoz' qiymatini qo'shish (bir martalik migration)
+@mysqli_query($conn, "ALTER TABLE users MODIFY COLUMN role ENUM('superadmin','admin','sotuvchi','mijoz') NOT NULL DEFAULT 'sotuvchi'");
+
 $st    = mysqli_fetch_assoc(mysqli_query($conn, "SELECT store_name FROM settings WHERE id=1"));
 $site  = $st['store_name'] ?? "ELEVEN";
 $xato  = "";
