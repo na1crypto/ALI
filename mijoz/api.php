@@ -19,7 +19,7 @@ if ($action === 'products') {
     $sql = "SELECT p.id, p.name, p.price, p.optom_price, p.quantity, p.barcode,
                    IFNULL(k.name,'') AS kategoriya
             FROM products p
-            LEFT JOIN kategoriyalar k ON p.kategoriya_id = k.id
+            LEFT JOIN categories k ON p.category_id = k.id
             WHERE p.quantity > 0 $where
             ORDER BY p.name ASC
             LIMIT 60";
