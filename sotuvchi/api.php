@@ -99,8 +99,8 @@ if ($action == 'complete_sale') {
             throw new Exception("Sales jadvaliga yozib bo'lmadi: " . mysqli_error($conn));
         }
         
-        // Baza o'zi bergan Chek raqamini (ID) olamiz
-        $sale_id = mysqli_insert_id($conn);
+        // Chek raqami (ID)
+        $sale_id = $next_sale_id;
 
         // --- 2-QADAM: `sale_items` (Ichidagi tovarlar) jadvaliga yozish ---
         foreach($items as $item) {
