@@ -110,39 +110,46 @@ if ($action === 'checkout') {
         $user_id = (int)$_SESSION['user_id'];
         $total = 0;
         foreach ($cart as $item) $total += $item['price'] * $item['qty'];
+        $final = $total; // yetkazish bepul
 
-        $delivery_fee = ($yetkazish && $total >= 1500000) ? 0 : 0; // Yetkazish bepul ≥1.5M
-        $final = $total + $delivery_fee;
+        // Note matni
+        $note_text = $yetkazish
+            ? "Yetkazish: $manzil" . ($izoh ? ". $izoh" : "")
+            : "Olib ketadi" . ($izoh ? ". $izoh" : "");
+        $note_esc = mysqli_real_escape_string($conn, $note_text);
+        $sale_type = $yetkazish ? 'yetkazish' : 'oddiy';
 
-        // Buyurtma yozish
-        $payment = 'naqd';
-        $next = mysqli_fetch_assoc(mysqli_query($conn,"SELECT COALESCE(MAX(id),0)+1 AS n FROM sales"))['n'];
-
-        // note ustuni borligini aniqlash
-        $cols = mysqli_query($conn,"SHOW COLUMNS FROM sales LIKE 'note'");
-        if (mysqli_num_rows($cols) > 0) {
-            $note = $yetkazish ? "Yetkazish: $manzil. $izoh" : "O'zi oladi. $izoh";
-            $note = mysqli_real_escape_string($conn, $note);
-            mysqli_query($conn,"INSERT INTO sales (id,user_id,total_price,payment_method,note)
-                                 VALUES ($next,$user_id,$final,'$payment','$note')");
-        } else {
-            mysqli_query($conn,"INSERT INTO sales (id,user_id,total_price,payment_method)
-                                 VALUES ($next,$user_id,$final,'$payment')");
+        // sales ga yozish (yangi sxema: note, customer_id, sale_type bor)
+        $sql_sale = "INSERT INTO sales (id, user_id, customer_id, total_price, payment_method, sale_type, note)
+                     VALUES (NULL, $user_id, NULL, $final, 'online', '$sale_type', '$note_esc')";
+        if (!mysqli_query($conn, $sql_sale)) {
+            // Eski sxema uchun fallback
+            $sql_sale = "INSERT INTO sales (id, user_id, total_price, payment_method, note)
+                         VALUES (NULL, $user_id, $final, 'naqd', '$note_esc')";
+            if (!mysqli_query($conn, $sql_sale)) {
+                throw new Exception("Buyurtma yozilmadi: " . mysqli_error($conn));
+            }
         }
+        $sale_id = mysqli_insert_id($conn);
 
+        // sale_items ga yozish — trigger stokni avtomatik kamaytiradi
         foreach ($cart as $item) {
             $p  = (int)$item['id'];
             $q  = (int)$item['qty'];
             $pr = (float)$item['price'];
-            $ni = mysqli_fetch_assoc(mysqli_query($conn,"SELECT COALESCE(MAX(id),0)+1 AS n FROM sale_items"))['n'];
-            mysqli_query($conn,"INSERT INTO sale_items (id,sale_id,product_id,quantity,unit_price,price)
-                                VALUES ($ni,$next,$p,$q,$pr,".($pr*$q).")");
-            mysqli_query($conn,"UPDATE products SET quantity=quantity-$q WHERE id=$p");
+            $total_item = $pr * $q;
+            $sql_item = "INSERT INTO sale_items (id, sale_id, product_id, quantity, unit_price, price)
+                         VALUES (NULL, $sale_id, $p, $q, $pr, $total_item)";
+            if (!mysqli_query($conn, $sql_item)) {
+                throw new Exception("Mahsulot yozilmadi: " . mysqli_error($conn));
+            }
+            // Trigger yo'q bo'lsa qo'lda kamaytirish
+            mysqli_query($conn, "UPDATE products SET quantity=quantity-$q WHERE id=$p");
         }
 
         mysqli_commit($conn);
         $_SESSION['cart'] = [];
-        echo json_encode(['status'=>'ok','sale_id'=>$next,'total'=>$final]);
+        echo json_encode(['status'=>'ok','sale_id'=>$sale_id,'total'=>$final]);
     } catch (Exception $e) {
         mysqli_rollback($conn);
         echo json_encode(['status'=>'error','message'=>$e->getMessage()]);
