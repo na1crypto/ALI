@@ -56,7 +56,23 @@ if (isset($_POST['add_user'])) {
     }
 }
 
-// 3. XODIMNI O'CHIRISH
+// 3. PAROLNI O'ZGARTIRISH (Superadmin istalgan xodim parolini o'zgartira oladi)
+if (isset($_POST['change_password'])) {
+    $uid = (int)$_POST['user_id'];
+    $new_pass = trim($_POST['new_password']);
+    if ($uid > 0 && strlen($new_pass) >= 4) {
+        $hashed = password_hash($new_pass, PASSWORD_DEFAULT);
+        if (mysqli_query($conn, "UPDATE users SET password='$hashed' WHERE id=$uid")) {
+            $status = "pass_changed";
+        } else {
+            $status = "error";
+        }
+    } else {
+        $status = "pass_short";
+    }
+}
+
+// 4. XODIMNI O'CHIRISH
 if (isset($_GET['delete'])) {
     $id = (int)$_GET['delete'];
     if ($id != $_SESSION['user_id']) {
@@ -140,6 +156,10 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
             <div class="bento-alert alert-danger"><i class="fas fa-exclamation-triangle" style="font-size: 20px;"></i> Bu Login band! Boshqa login o'ylab toping.</div>
         <?php elseif($status == "error"): ?>
             <div class="bento-alert alert-danger"><i class="fas fa-times-circle" style="font-size: 20px;"></i> Xatolik yuz berdi. Qaytadan urinib ko'ring.</div>
+        <?php elseif($status == "pass_changed"): ?>
+            <div class="bento-alert alert-success"><i class="fas fa-key" style="font-size: 20px;"></i> Parol muvaffaqiyatli o'zgartirildi!</div>
+        <?php elseif($status == "pass_short"): ?>
+            <div class="bento-alert alert-danger"><i class="fas fa-exclamation-triangle" style="font-size: 20px;"></i> Parol kamida 4 ta belgidan iborat bo'lishi kerak!</div>
         <?php endif; ?>
 
         <div class="row">
@@ -182,7 +202,7 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
                                 <tr>
                                     <th>F.I.SH va Login</th>
                                     <th>Lavozimi</th>
-                                    <th class="text-right">Harakat</th>
+                                    <th class="text-right">Harakatlar</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -209,14 +229,22 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
                                         <?php endif; ?>
                                     </td>
                                     <td class="text-right">
-                                        <?php if($u['role'] != 'superadmin' && $u['role'] != 'admin'): ?>
-                                            <a href="?delete=<?= $u['id'] ?>" class="btn btn-sm" onclick="return confirm('Rostdan ham bu xodimni ishdan bo\'shatasizmi?')" 
-                                               style="background: #FEF2F2; color: #EF4444; border-radius: 8px; padding: 8px 12px; font-weight: 600; transition: 0.2s; text-decoration: none;">
-                                                <i class="fas fa-trash-alt mr-1"></i> O'chirish
-                                            </a>
-                                        <?php else: ?>
-                                            <span class="text-muted" style="font-size: 12px; font-weight: 600;"><i class="fas fa-lock mr-1"></i> Taqiqlangan</span>
-                                        <?php endif; ?>
+                                        <div class="d-flex justify-content-end align-items-center" style="gap: 8px;">
+                                            <!-- Parolni o'zgartirish — barcha foydalanuvchilar uchun -->
+                                            <button onclick="openPassModal(<?= $u['id'] ?>, '<?= htmlspecialchars($u['name'], ENT_QUOTES) ?>')"
+                                                style="background: #EFF6FF; color: #2563EB; border: none; border-radius: 8px; padding: 8px 12px; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s;">
+                                                <i class="fas fa-key mr-1"></i> Parol
+                                            </button>
+                                            <!-- O'chirish — faqat sotuvchilar uchun -->
+                                            <?php if($u['role'] != 'superadmin' && $u['role'] != 'admin'): ?>
+                                                <a href="?delete=<?= $u['id'] ?>" onclick="return confirm('Rostdan ham bu xodimni ishdan bo\'shatasizmi?')"
+                                                   style="background: #FEF2F2; color: #EF4444; border-radius: 8px; padding: 8px 12px; font-weight: 600; font-size: 13px; transition: 0.2s; text-decoration: none;">
+                                                    <i class="fas fa-trash-alt mr-1"></i> O'chirish
+                                                </a>
+                                            <?php else: ?>
+                                                <span style="font-size: 12px; color: #94A3B8; font-weight: 600;"><i class="fas fa-lock mr-1"></i> Himoyali</span>
+                                            <?php endif; ?>
+                                        </div>
                                     </td>
                                 </tr>
                                 <?php endwhile; ?>
@@ -229,7 +257,103 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
         </div>
     </div>
 
+<!-- ============ PAROLNI O'ZGARTIRISH MODALI ============ -->
+<div id="passModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:20px; padding:36px 32px; width:100%; max-width:420px; box-shadow:0 20px 60px rgba(0,0,0,0.15); position:relative;">
+        <button onclick="closePassModal()" style="position:absolute; top:16px; right:16px; background:#F1F5F9; border:none; border-radius:8px; width:32px; height:32px; font-size:16px; cursor:pointer; color:#64748B;">&times;</button>
+
+        <div style="text-align:center; margin-bottom:24px;">
+            <div style="width:60px; height:60px; background:#EFF6FF; border-radius:16px; display:flex; align-items:center; justify-content:center; margin:0 auto 12px; font-size:26px; color:#2563EB;">
+                <i class="fas fa-key"></i>
+            </div>
+            <h5 style="font-weight:800; color:#0F172A; margin:0; font-size:18px;">Parolni O'zgartirish</h5>
+            <p id="passModalName" style="color:#64748B; font-size:14px; margin-top:6px; font-weight:500;"></p>
+        </div>
+
+        <form method="POST" onsubmit="return validatePassForm()">
+            <input type="hidden" name="user_id" id="passUserId">
+
+            <label style="font-size:12px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">Yangi Parol</label>
+            <div style="position:relative; margin-bottom:16px;">
+                <input type="password" name="new_password" id="newPassInput" placeholder="Yangi parolni kiriting..."
+                    style="width:100%; padding:13px 46px 13px 16px; border:1px solid #E2E8F0; border-radius:12px; font-size:14px; font-weight:500; color:#0F172A; background:#F8FAFC; box-sizing:border-box; transition:0.2s;"
+                    onfocus="this.style.borderColor='#2563EB'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(37,99,235,0.1)'"
+                    onblur="this.style.borderColor='#E2E8F0'; this.style.background='#F8FAFC'; this.style.boxShadow='none'">
+                <button type="button" onclick="togglePass('newPassInput', 'eyeIcon1')" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:#94A3B8; font-size:16px;">
+                    <i id="eyeIcon1" class="fas fa-eye"></i>
+                </button>
+            </div>
+
+            <label style="font-size:12px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:8px;">Parolni Tasdiqlang</label>
+            <div style="position:relative; margin-bottom:24px;">
+                <input type="password" id="confirmPassInput" placeholder="Parolni qayta kiriting..."
+                    style="width:100%; padding:13px 46px 13px 16px; border:1px solid #E2E8F0; border-radius:12px; font-size:14px; font-weight:500; color:#0F172A; background:#F8FAFC; box-sizing:border-box; transition:0.2s;"
+                    onfocus="this.style.borderColor='#2563EB'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(37,99,235,0.1)'"
+                    onblur="this.style.borderColor='#E2E8F0'; this.style.background='#F8FAFC'; this.style.boxShadow='none'">
+                <button type="button" onclick="togglePass('confirmPassInput', 'eyeIcon2')" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:#94A3B8; font-size:16px;">
+                    <i id="eyeIcon2" class="fas fa-eye"></i>
+                </button>
+            </div>
+
+            <div id="passError" style="display:none; background:#FEF2F2; border:1px solid #FECACA; color:#B91C1C; border-radius:10px; padding:10px 14px; font-size:13px; font-weight:600; margin-bottom:16px;"></div>
+
+            <button type="submit" name="change_password"
+                style="width:100%; background:linear-gradient(135deg,#2563EB,#1D4ED8); color:white; border:none; border-radius:12px; padding:14px; font-weight:700; font-size:15px; cursor:pointer; box-shadow:0 4px 12px rgba(37,99,235,0.3); transition:0.2s;"
+                onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                <i class="fas fa-save mr-2"></i> Parolni Saqlash
+            </button>
+        </form>
+    </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function openPassModal(userId, userName) {
+    document.getElementById('passUserId').value = userId;
+    document.getElementById('passModalName').textContent = userName + ' uchun yangi parol';
+    document.getElementById('newPassInput').value = '';
+    document.getElementById('confirmPassInput').value = '';
+    document.getElementById('passError').style.display = 'none';
+    const modal = document.getElementById('passModal');
+    modal.style.display = 'flex';
+    setTimeout(() => document.getElementById('newPassInput').focus(), 100);
+}
+function closePassModal() {
+    document.getElementById('passModal').style.display = 'none';
+}
+function togglePass(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+}
+function validatePassForm() {
+    const p1 = document.getElementById('newPassInput').value;
+    const p2 = document.getElementById('confirmPassInput').value;
+    const errDiv = document.getElementById('passError');
+    if (p1.length < 4) {
+        errDiv.innerHTML = '<i class="fas fa-exclamation-circle mr-1"></i> Parol kamida 4 ta belgidan iborat bo\'lishi kerak!';
+        errDiv.style.display = 'block';
+        return false;
+    }
+    if (p1 !== p2) {
+        errDiv.innerHTML = '<i class="fas fa-exclamation-circle mr-1"></i> Parollar bir-biriga mos kelmaydi!';
+        errDiv.style.display = 'block';
+        return false;
+    }
+    errDiv.style.display = 'none';
+    return true;
+}
+// Modal tashqarisiga bosish — yopiladi
+document.getElementById('passModal').addEventListener('click', function(e) {
+    if (e.target === this) closePassModal();
+});
+</script>
 </body>
 </html>
