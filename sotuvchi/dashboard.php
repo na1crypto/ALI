@@ -469,12 +469,13 @@ function confirmCheckout() {
                 $('#paymentModal').modal('hide'); 
                 if(res.sale_id) { window.open('chek.php?id=' + res.sale_id, 'Chek', 'width=450,height=700'); } 
                 else { alert("Savdo tugadi, lekin chek raqami kelmadi!"); }
-                setTimeout(function() { 
-                    cart = []; 
-                    $('#discountInput').val(0); 
-                    if(isOptomMode) toggleOptomMode(); 
-                    $('#searchProduct').focus(); 
-                }, 1000);
+                setTimeout(function() {
+                    cart = [];
+                    renderCart();
+                    $('#discountInput').val(0);
+                    if(isOptomMode) toggleOptomMode();
+                    $('#searchProduct').val('').focus();
+                }, 800);
             } else alert("Xato: " + res.message);
         }, error: function() { alert("Server xatosi!"); }
     });
