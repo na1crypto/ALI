@@ -77,8 +77,9 @@ $products = mysqli_query($conn, "SELECT * FROM products WHERE quantity > 0 ORDER
 
         <div class="products-grid" id="productList">
             <?php while($p = mysqli_fetch_assoc($products)): ?>
-            <div class="product-card item-card" 
-                 data-name="<?= htmlspecialchars(strtolower($p['name'])) ?>" 
+            <div class="product-card item-card"
+                 data-id="<?= $p['id'] ?>"
+                 data-name="<?= htmlspecialchars(strtolower($p['name'])) ?>"
                  data-category="<?= $p['category_id'] ?? 0 ?>"
                  data-price="<?= $p['price'] ?>"
                  data-optom="<?= $p['optom_price'] > 0 ? $p['optom_price'] : $p['price'] ?>"
@@ -469,13 +470,25 @@ function confirmCheckout() {
                 $('#paymentModal').modal('hide'); 
                 if(res.sale_id) { window.open('chek.php?id=' + res.sale_id, 'Chek', 'width=450,height=700'); } 
                 else { alert("Savdo tugadi, lekin chek raqami kelmadi!"); }
+                // Sotilgan mahsulotlar sonini kartochkalarda kamaytirish
+                checkoutItems.forEach(function(item) {
+                    let card = document.querySelector('.product-card[data-id="' + item.id + '"]');
+                    if(card) {
+                        let badge = card.querySelector('.stock-badge');
+                        if(badge) {
+                            let cur = parseInt(badge.textContent) || 0;
+                            let newQty = cur - item.count;
+                            badge.textContent = newQty;
+                            if(newQty <= 0) card.style.opacity = '0.4';
+                        }
+                    }
+                });
                 setTimeout(function() {
                     cart = [];
                     renderCart();
                     $('#discountInput').val(0);
                     if(isOptomMode) toggleOptomMode();
-                    // Mahsulot kartochkalarini yangilash (miqdor o'zgarishi uchun)
-                    location.reload();
+                    $('#searchProduct').val('').focus();
                 }, 800);
             } else alert("Xato: " + res.message);
         }, error: function() { alert("Server xatosi!"); }
