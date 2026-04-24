@@ -494,6 +494,7 @@ function confirmCheckout() {
                     $('#discountInput').val(0);
                     if(isOptomMode) toggleOptomMode();
                     $('#searchProduct').val('').focus();
+                    $btn.prop('disabled', false).html('TASDIQLASH <i class="fas fa-check-circle ml-2"></i>');
                 }, 800);
             } else alert("Xato: " + res.message);
         }, error: function() {
