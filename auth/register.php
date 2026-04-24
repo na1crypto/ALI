@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $n  = mysqli_real_escape_string($conn, $ism);
             $t  = mysqli_real_escape_string($conn, $tel);
             $ph = password_hash($parol, PASSWORD_DEFAULT);
-            $sql = "INSERT INTO users (id, name, username, password, role) VALUES (NULL,'$n','$u','$ph','mijoz')";
+            $sql = "INSERT INTO users (name, username, password, role) VALUES ('$n','$u','$ph','mijoz') /* TiDB */";
             if (mysqli_query($conn, $sql)) {
                 $uid = mysqli_insert_id($conn);
                 $_SESSION['user_id'] = $uid;
