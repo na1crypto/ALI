@@ -37,28 +37,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $n  = mysqli_real_escape_string($conn, $ism);
             $t  = mysqli_real_escape_string($conn, $tel);
             $ph = password_hash($parol, PASSWORD_DEFAULT);
-            $sql = "INSERT INTO users (name, username, password, role, phone) VALUES ('$n','$u','$ph','mijoz','$t')";
+            $sql = "INSERT INTO users (name, username, password, role) VALUES ('$n','$u','$ph','mijoz')";
             if (mysqli_query($conn, $sql)) {
                 $uid = mysqli_insert_id($conn);
                 $_SESSION['user_id'] = $uid;
                 $_SESSION['name']    = $ism;
                 $_SESSION['role']    = 'mijoz';
-                $_SESSION['phone']   = $tel;
+                $_SESSION['phone']   = $t;
                 header("Location: /mijoz/index.php");
                 exit;
             } else {
-                // phone ustuni yo'q bo'lsa oddiy INSERT
-                $sql2 = "INSERT INTO users (name, username, password, role) VALUES ('$n','$u','$ph','mijoz')";
-                if (mysqli_query($conn, $sql2)) {
-                    $uid = mysqli_insert_id($conn);
-                    $_SESSION['user_id'] = $uid;
-                    $_SESSION['name']    = $ism;
-                    $_SESSION['role']    = 'mijoz';
-                    header("Location: /mijoz/index.php");
-                    exit;
-                } else {
-                    $xato = "Xatolik yuz berdi: " . mysqli_error($conn);
-                }
+                $xato = "Xatolik yuz berdi: " . mysqli_error($conn);
             }
         }
     }
