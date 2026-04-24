@@ -461,6 +461,11 @@ function confirmCheckout() {
         return { id: item.id, name: item.name, price: finalItemPrice, count: item.count };
     });
 
+    // Tugmani bloklash — ikki marta bosilmasin
+    let $btn = $('.btn-confirm-pay');
+    if($btn.prop('disabled')) return;
+    $btn.prop('disabled', true).text('Saqlanmoqda...');
+
     $.ajax({
         url: "api.php?action=complete_sale", method: "POST",
         data: { items: JSON.stringify(checkoutItems), payment_method: selectedPaymentMethod, discount: discountAmt },
@@ -491,7 +496,10 @@ function confirmCheckout() {
                     $('#searchProduct').val('').focus();
                 }, 800);
             } else alert("Xato: " + res.message);
-        }, error: function() { alert("Server xatosi!"); }
+        }, error: function() {
+            alert("Server xatosi!");
+            $btn.prop('disabled', false).html('TASDIQLASH <i class="fas fa-check-circle ml-2"></i>');
+        }
     });
 }
 </script>
