@@ -35,23 +35,34 @@ $site_name = $st['store_name'] ?? "ZIFRA SMART";
 
 $status = "";
 
+// migration: address ustuni
+@mysqli_query($conn, "ALTER TABLE users ADD COLUMN IF NOT EXISTS address VARCHAR(255) DEFAULT NULL");
+
 // 2. XODIM QO'SHISH LOGIKASI
 if (isset($_POST['add_user'])) {
-    $name = mysqli_real_escape_string($conn, trim($_POST['name']));
-    $username = mysqli_real_escape_string($conn, trim($_POST['username']));
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-    $role = mysqli_real_escape_string($conn, $_POST['role']);
+    $name     = mysqli_real_escape_string($conn, trim($_POST['name']     ?? ''));
+    $username = mysqli_real_escape_string($conn, trim($_POST['username'] ?? ''));
+    $phone    = mysqli_real_escape_string($conn, trim($_POST['phone']    ?? ''));
+    $address  = mysqli_real_escape_string($conn, trim($_POST['address']  ?? ''));
+    $password = password_hash($_POST['password'] ?? '', PASSWORD_DEFAULT);
+    $role     = mysqli_real_escape_string($conn, $_POST['role'] ?? 'sotuvchi');
 
     // Login band emasligini tekshirish
     $check = mysqli_query($conn, "SELECT id FROM users WHERE username='$username'");
-    if(mysqli_num_rows($check) > 0) {
+    if (mysqli_num_rows($check) > 0) {
         $status = "error_exist";
     } else {
-        $sql = "INSERT INTO users (name, username, password, role) VALUES ('$name', '$username', '$password', '$role')";
+        // TiDB Cloud: AUTO_INCREMENT yo'q — ID ni qo'lda hisoblaymiz
+        $row   = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COALESCE(MAX(id),0)+1 AS nid FROM users"));
+        $newId = (int)$row['nid'];
+
+        $sql = "INSERT INTO users (id, name, username, password, phone, address, role)
+                VALUES ($newId, '$name', '$username', '$password', '$phone', '$address', '$role')";
         if (mysqli_query($conn, $sql)) {
             $status = "success";
         } else {
-            $status = "error";
+            $status = "error_db";
+            $db_err = mysqli_error($conn);
         }
     }
 }
@@ -155,6 +166,8 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
             <div class="bento-alert alert-success"><i class="fas fa-trash-alt" style="font-size: 20px;"></i> Xodim tizimdan o'chirildi.</div>
         <?php elseif($status == "error_exist"): ?>
             <div class="bento-alert alert-danger"><i class="fas fa-exclamation-triangle" style="font-size: 20px;"></i> Bu Login band! Boshqa login o'ylab toping.</div>
+        <?php elseif($status == "error_db"): ?>
+            <div class="bento-alert alert-danger"><i class="fas fa-times-circle" style="font-size: 20px;"></i> DB xatosi: <?= htmlspecialchars($db_err ?? '') ?></div>
         <?php elseif($status == "error"): ?>
             <div class="bento-alert alert-danger"><i class="fas fa-times-circle" style="font-size: 20px;"></i> Xatolik yuz berdi. Qaytadan urinib ko'ring.</div>
         <?php elseif($status == "pass_changed"): ?>
@@ -169,16 +182,26 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
                     <h5 style="font-weight: 800; color: #0F172A; margin-bottom: 24px;"><i class="fas fa-user-plus text-primary mr-2"></i> Yangi Xodim</h5>
                     
                     <form method="POST">
-                        <label class="bento-label">To'liq Ismi</label>
-                        <input type="text" name="name" class="bento-input" placeholder="Masalan: Sardor Komilov" required>
+                        <label class="bento-label">To'liq Ismi *</label>
+                        <input type="text" name="name" class="bento-input" placeholder="Sardor Komilov" required
+                               value="<?= htmlspecialchars($_POST['name'] ?? '') ?>">
 
-                        <label class="bento-label">Tizimga kirish uchun Login</label>
-                        <input type="text" name="username" class="bento-input" placeholder="sardor_123" required>
+                        <label class="bento-label">Telefon raqami</label>
+                        <input type="tel" name="phone" class="bento-input" placeholder="+998 90 123 45 67"
+                               value="<?= htmlspecialchars($_POST['phone'] ?? '') ?>">
 
-                        <label class="bento-label">Maxfiy Parol</label>
-                        <input type="password" name="password" class="bento-input" placeholder="••••••••" required>
+                        <label class="bento-label">Manzil (yashash joyi)</label>
+                        <input type="text" name="address" class="bento-input" placeholder="Toshkent, Chilonzor 5"
+                               value="<?= htmlspecialchars($_POST['address'] ?? '') ?>">
 
-                        <label class="bento-label">Vazifasi (Roli)</label>
+                        <label class="bento-label">Login *</label>
+                        <input type="text" name="username" class="bento-input" placeholder="sardor_123" required
+                               autocomplete="off" value="<?= htmlspecialchars($_POST['username'] ?? '') ?>">
+
+                        <label class="bento-label">Parol *</label>
+                        <input type="password" name="password" class="bento-input" placeholder="••••••••" required autocomplete="new-password">
+
+                        <label class="bento-label">Vazifasi (Roli) *</label>
                         <select name="role" class="bento-input" style="cursor: pointer;" required>
                             <option value="sotuvchi">🧾 Sotuvchi (Kassa)</option>
                             <option value="menejer">📋 Menejer (Buyurtmalar)</option>
@@ -186,7 +209,7 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
                         </select>
 
                         <button type="submit" name="add_user" class="btn-submit mt-2">
-                            <i class="fas fa-check"></i> Xodimni Tizimga Qo'shish
+                            <i class="fas fa-user-plus"></i> Xodimni Qo'shish
                         </button>
                     </form>
                 </div>
@@ -202,9 +225,11 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
                         <table class="bento-table">
                             <thead>
                                 <tr>
-                                    <th>F.I.SH va Login</th>
-                                    <th>Lavozimi</th>
-                                    <th class="text-right">Harakatlar</th>
+                                    <th>Xodim</th>
+                                    <th>Telefon / Manzil</th>
+                                    <th>Lavozim</th>
+                                    <th>Holat</th>
+                                    <th class="text-right">Amallar</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -216,10 +241,26 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
                                                 <?= strtoupper(substr($u['name'], 0, 1)) ?>
                                             </div>
                                             <div>
-                                                <div style="font-weight: 700; color: #0F172A; font-size: 15px;"><?= htmlspecialchars($u['name']) ?></div>
-                                                <div style="font-size: 12px; color: #64748B; font-family: monospace; font-weight: 600;">@<?= htmlspecialchars($u['username']) ?></div>
+                                                <div style="font-weight:700;color:#0F172A;font-size:14px;"><?= htmlspecialchars($u['name']) ?></div>
+                                                <div style="font-size:11px;color:#64748B;font-family:monospace;font-weight:600;">@<?= htmlspecialchars($u['username']) ?></div>
                                             </div>
                                         </div>
+                                    </td>
+                                    <td>
+                                        <?php if(!empty($u['phone'])): ?>
+                                            <div style="font-size:13px;font-weight:600;color:#0F172A;">
+                                                <i class="fas fa-phone-alt" style="color:#4F46E5;font-size:11px;"></i>
+                                                <?= htmlspecialchars($u['phone']) ?>
+                                            </div>
+                                        <?php endif; ?>
+                                        <?php if(!empty($u['address'])): ?>
+                                            <div style="font-size:11px;color:#64748B;margin-top:2px;">
+                                                <i class="fas fa-map-marker-alt" style="font-size:10px;"></i>
+                                                <?= htmlspecialchars($u['address']) ?>
+                                            </div>
+                                        <?php elseif(empty($u['phone'])): ?>
+                                            <span style="font-size:12px;color:#CBD5E1;">—</span>
+                                        <?php endif; ?>
                                     </td>
                                     <td>
                                         <?php if($u['role'] == 'superadmin'): ?>
@@ -234,21 +275,27 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
                                             <span class="badge-role role-sotuvchi"><i class="fas fa-cash-register"></i> Sotuvchi</span>
                                         <?php endif; ?>
                                     </td>
+                                    <td>
+                                        <?php $st_val = $u['status'] ?? 'active'; ?>
+                                        <?php if($st_val === 'active'): ?>
+                                            <span style="font-size:12px;font-weight:700;color:#059669;"><i class="fas fa-circle" style="font-size:8px;"></i> Faol</span>
+                                        <?php else: ?>
+                                            <span style="font-size:12px;font-weight:700;color:#94A3B8;"><i class="fas fa-circle" style="font-size:8px;"></i> Nofaol</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td class="text-right">
-                                        <div class="d-flex justify-content-end align-items-center" style="gap: 8px;">
-                                            <!-- Parolni o'zgartirish — barcha foydalanuvchilar uchun -->
+                                        <div class="d-flex justify-content-end align-items-center" style="gap:6px;">
                                             <button onclick="openPassModal(<?= $u['id'] ?>, '<?= htmlspecialchars($u['name'], ENT_QUOTES) ?>')"
-                                                style="background: #EFF6FF; color: #2563EB; border: none; border-radius: 8px; padding: 8px 12px; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s;">
-                                                <i class="fas fa-key mr-1"></i> Parol
+                                                style="background:#EFF6FF;color:#2563EB;border:none;border-radius:8px;padding:7px 11px;font-weight:600;font-size:12px;cursor:pointer;">
+                                                <i class="fas fa-key"></i>
                                             </button>
-                                            <!-- O'chirish — faqat sotuvchi va mijozlar uchun -->
                                             <?php if(!in_array($u['role'], ['superadmin','admin','menejer'])): ?>
-                                                <a href="?delete=<?= $u['id'] ?>" onclick="return confirm('Rostdan ham bu xodimni ishdan bo\'shatasizmi?')"
-                                                   style="background: #FEF2F2; color: #EF4444; border-radius: 8px; padding: 8px 12px; font-weight: 600; font-size: 13px; transition: 0.2s; text-decoration: none;">
-                                                    <i class="fas fa-trash-alt mr-1"></i> O'chirish
+                                                <a href="?delete=<?= $u['id'] ?>" onclick="return confirm('Rostdan ham o\'chirasizmi?')"
+                                                   style="background:#FEF2F2;color:#EF4444;border-radius:8px;padding:7px 11px;font-weight:600;font-size:12px;text-decoration:none;">
+                                                    <i class="fas fa-trash-alt"></i>
                                                 </a>
                                             <?php else: ?>
-                                                <span style="font-size: 12px; color: #94A3B8; font-weight: 600;"><i class="fas fa-lock mr-1"></i> Himoyali</span>
+                                                <span style="font-size:11px;color:#CBD5E1;padding:7px 8px;"><i class="fas fa-lock"></i></span>
                                             <?php endif; ?>
                                         </div>
                                     </td>
