@@ -76,7 +76,7 @@ if (isset($_POST['change_password'])) {
 if (isset($_GET['delete'])) {
     $id = (int)$_GET['delete'];
     if ($id != $_SESSION['user_id']) {
-        mysqli_query($conn, "DELETE FROM users WHERE id=$id AND role != 'superadmin' AND role != 'admin'");
+        mysqli_query($conn, "DELETE FROM users WHERE id=$id AND role NOT IN ('superadmin','admin','menejer')");
         header("Location: index.php?status=deleted");
         exit;
     }
@@ -117,8 +117,9 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
         .bento-table tbody tr:hover td { background: #F8FAFC; }
         .badge-role { padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
         .role-superadmin { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
-        .role-admin { background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; }
-        .role-sotuvchi { background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; }
+        .role-admin      { background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; }
+        .role-sotuvchi   { background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; }
+        .role-menejer    { background: #FFF7ED; color: #EA580C; border: 1px solid #FED7AA; }
         .user-avatar-sm { width: 36px; height: 36px; border-radius: 10px; background: #F1F5F9; color: #475569; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; margin-right: 12px; }
         .bento-alert { padding: 16px 20px; border-radius: 14px; display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 14px; margin-bottom: 24px; animation: slideDown 0.4s ease-out; }
         .alert-success { background: #ECFDF5; border: 1px solid #A7F3D0; color: #065F46; }
@@ -179,8 +180,9 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
 
                         <label class="bento-label">Vazifasi (Roli)</label>
                         <select name="role" class="bento-input" style="cursor: pointer;" required>
-                            <option value="sotuvchi">Sotuvchi (Kassa)</option>
-                            <option value="admin">Admin (Ombor/Menejer)</option>
+                            <option value="sotuvchi">🧾 Sotuvchi (Kassa)</option>
+                            <option value="menejer">📋 Menejer (Buyurtmalar)</option>
+                            <option value="admin">🛡️ Admin (Ombor/Boshqaruv)</option>
                         </select>
 
                         <button type="submit" name="add_user" class="btn-submit mt-2">
@@ -223,7 +225,11 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
                                         <?php if($u['role'] == 'superadmin'): ?>
                                             <span class="badge-role role-superadmin"><i class="fas fa-crown"></i> Boshqaruvchi</span>
                                         <?php elseif($u['role'] == 'admin'): ?>
-                                            <span class="badge-role role-admin"><i class="fas fa-shield-alt"></i> Ombor / Menejer</span>
+                                            <span class="badge-role role-admin"><i class="fas fa-shield-alt"></i> Admin</span>
+                                        <?php elseif($u['role'] == 'menejer'): ?>
+                                            <span class="badge-role role-menejer"><i class="fas fa-clipboard-list"></i> Menejer</span>
+                                        <?php elseif($u['role'] == 'mijoz'): ?>
+                                            <span class="badge-role" style="background:#F3F0FF;color:#7C3AED;border:1px solid #DDD6FE;"><i class="fas fa-user"></i> Mijoz</span>
                                         <?php else: ?>
                                             <span class="badge-role role-sotuvchi"><i class="fas fa-cash-register"></i> Sotuvchi</span>
                                         <?php endif; ?>
@@ -235,8 +241,8 @@ $users = mysqli_query($conn, "SELECT * FROM users ORDER BY id DESC");
                                                 style="background: #EFF6FF; color: #2563EB; border: none; border-radius: 8px; padding: 8px 12px; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s;">
                                                 <i class="fas fa-key mr-1"></i> Parol
                                             </button>
-                                            <!-- O'chirish — faqat sotuvchilar uchun -->
-                                            <?php if($u['role'] != 'superadmin' && $u['role'] != 'admin'): ?>
+                                            <!-- O'chirish — faqat sotuvchi va mijozlar uchun -->
+                                            <?php if(!in_array($u['role'], ['superadmin','admin','menejer'])): ?>
                                                 <a href="?delete=<?= $u['id'] ?>" onclick="return confirm('Rostdan ham bu xodimni ishdan bo\'shatasizmi?')"
                                                    style="background: #FEF2F2; color: #EF4444; border-radius: 8px; padding: 8px 12px; font-weight: 600; font-size: 13px; transition: 0.2s; text-decoration: none;">
                                                     <i class="fas fa-trash-alt mr-1"></i> O'chirish
