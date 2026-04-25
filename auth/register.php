@@ -12,16 +12,15 @@ if (isset($_SESSION['user_id'])) {
 // role ustuniga 'mijoz' qiymatini qo'shish (bir martalik migration)
 @mysqli_query($conn, "ALTER TABLE users MODIFY COLUMN role ENUM('superadmin','admin','sotuvchi','mijoz') NOT NULL DEFAULT 'sotuvchi'");
 
-$st    = mysqli_fetch_assoc(mysqli_query($conn, "SELECT store_name FROM settings WHERE id=1"));
-$site  = $st['store_name'] ?? "ELEVEN";
-$xato  = "";
-$muvaffaqiyat = "";
+$st   = mysqli_fetch_assoc(mysqli_query($conn, "SELECT store_name FROM settings WHERE id=1"));
+$site = $st['store_name'] ?? "ELEVEN";
+$xato = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $ism      = trim($_POST['ism'] ?? '');
-    $tel      = trim($_POST['tel'] ?? '');
+    $ism      = trim($_POST['ism']      ?? '');
+    $tel      = trim($_POST['tel']      ?? '');
     $username = trim($_POST['username'] ?? '');
-    $parol    = $_POST['parol'] ?? '';
+    $parol    = $_POST['parol']  ?? '';
     $parol2   = $_POST['parol2'] ?? '';
 
     // Validatsiya
@@ -32,25 +31,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($parol !== $parol2) {
         $xato = "Parollar bir-biriga mos kelmadi!";
     } else {
-        $u = mysqli_real_escape_string($conn, $username);
-        $check = mysqli_query($conn, "SELECT id FROM users WHERE username='$u'");
-        if (mysqli_num_rows($check) > 0) {
+        // ✅ Prepared statement — SQL injection yo'q
+        $check = mysqli_prepare($conn, "SELECT id FROM users WHERE username = ?");
+        mysqli_stmt_bind_param($check, 's', $username);
+        mysqli_stmt_execute($check);
+        mysqli_stmt_store_result($check);
+
+        if (mysqli_stmt_num_rows($check) > 0) {
             $xato = "Bu login band! Boshqa login tanlang.";
+            mysqli_stmt_close($check);
         } else {
-            $n  = mysqli_real_escape_string($conn, $ism);
-            $t  = mysqli_real_escape_string($conn, $tel);
+            mysqli_stmt_close($check);
+
             $ph = password_hash($parol, PASSWORD_DEFAULT);
-            $sql = "INSERT INTO users (name, username, password, role) VALUES ('$n','$u','$ph','mijoz') /* TiDB */";
-            if (mysqli_query($conn, $sql)) {
+
+            // ✅ FIX: phone ham kiritildi, prepared statement ishlatildi
+            $stmt = mysqli_prepare($conn, "INSERT INTO users (name, username, password, phone, role) VALUES (?, ?, ?, ?, 'mijoz')");
+            mysqli_stmt_bind_param($stmt, 'ssss', $ism, $username, $ph, $tel);
+
+            if (mysqli_stmt_execute($stmt)) {
                 $uid = mysqli_insert_id($conn);
+                mysqli_stmt_close($stmt);
+
                 $_SESSION['user_id'] = $uid;
                 $_SESSION['name']    = $ism;
                 $_SESSION['role']    = 'mijoz';
-                $_SESSION['phone']   = $t;
+                $_SESSION['phone']   = $tel;
+
                 header("Location: /mijoz/index.php");
                 exit;
             } else {
-                $xato = "Xatolik yuz berdi: " . mysqli_error($conn);
+                $xato = "Xatolik yuz berdi: " . mysqli_stmt_error($stmt);
+                mysqli_stmt_close($stmt);
             }
         }
     }
@@ -132,7 +144,6 @@ label{display:block;font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:7
   margin-bottom:20px;
 }
 .alert-err{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#fca5a5;}
-.alert-ok{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:#6ee7b7;}
 
 .login-link{text-align:center;margin-top:20px;color:#64748b;font-size:14px;}
 .login-link a{color:#818cf8;font-weight:600;text-decoration:none;}
@@ -153,7 +164,7 @@ label{display:block;font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:7
   <h1><?= htmlspecialchars($site) ?></h1>
   <p class="sub">Yangi hisob yaratish</p>
 
-  <?php if($xato): ?>
+  <?php if ($xato): ?>
   <div class="alert alert-err">⚠️ <?= htmlspecialchars($xato) ?></div>
   <?php endif; ?>
 
@@ -161,17 +172,20 @@ label{display:block;font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:7
     <div class="row2">
       <div class="field">
         <label>Ismingiz</label>
-        <input class="inp" type="text" name="ism" placeholder="Sardor" value="<?= htmlspecialchars($_POST['ism']??'') ?>" required>
+        <input class="inp" type="text" name="ism" placeholder="Sardor"
+               value="<?= htmlspecialchars($_POST['ism'] ?? '') ?>" required>
       </div>
       <div class="field">
         <label>Telefon</label>
-        <input class="inp" type="tel" name="tel" placeholder="+998 90 123 45 67" value="<?= htmlspecialchars($_POST['tel']??'') ?>">
+        <input class="inp" type="tel" name="tel" placeholder="+998 90 123 45 67"
+               value="<?= htmlspecialchars($_POST['tel'] ?? '') ?>" required>
       </div>
     </div>
 
     <div class="field">
       <label>Login (foydalanuvchi nomi)</label>
-      <input class="inp" type="text" name="username" placeholder="sardor_shop" value="<?= htmlspecialchars($_POST['username']??'') ?>" required autocomplete="off">
+      <input class="inp" type="text" name="username" placeholder="sardor_shop"
+             value="<?= htmlspecialchars($_POST['username'] ?? '') ?>" required autocomplete="off">
     </div>
 
     <div class="row2">
