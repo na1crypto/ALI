@@ -60,7 +60,8 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['qabul'])) {
 
 // Mahsulotlar ro'yxati
 $prods = mysqli_query($conn, "
-    SELECT p.id, p.name, p.quantity, IFNULL(p.unit,'dona') AS unit,
+    SELECT p.id, p.name, IFNULL(p.barcode,'') AS barcode,
+           p.quantity, IFNULL(p.unit,'dona') AS unit,
            IFNULL(p.purchase_price,0) AS purchase_price,
            IFNULL(p.optom_price,0) AS optom_price,
            IFNULL(p.price,0) AS price,
@@ -156,6 +157,18 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:#F4F7FE;color:#1
         <div class="fc-title">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4318FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/><path d="M5 19h14"/></svg>
             Yangi Tovar Qabul Qilish
+        </div>
+
+        <!-- BARCODE SCANNER ZONE -->
+        <div style="background:#F0EEFF;border:2px dashed #4318FF;border-radius:12px;padding:11px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
+            <span style="font-size:20px">📷</span>
+            <div style="flex:1">
+                <div style="font-size:12px;font-weight:700;color:#4318FF;margin-bottom:3px">Shtrix-kod skaneri</div>
+                <input type="text" id="barcodeInput" placeholder="Shtrix-kodni skanerlang yoki qo'lda kiriting..."
+                       style="width:100%;border:none;background:transparent;font-size:13px;font-weight:600;color:#111C44;outline:none"
+                       autocomplete="off">
+            </div>
+            <div id="barcodeStatus" style="font-size:11px;font-weight:700;color:#A3AED0"></div>
         </div>
 
         <?php if($msg): ?>
@@ -267,7 +280,28 @@ var costEl    = document.getElementById('costInput');
 var optomEl   = document.getElementById('optomInput');
 var sotuvEl   = document.getElementById('sotuvInput');
 var expiryEl  = document.getElementById('expiryInput');
+var barcodeEl = document.getElementById('barcodeInput');
+var barcodeStatus = document.getElementById('barcodeStatus');
 
+// ── Mahsulot tanlash funksiyasi ──
+function selectProd(id, name, qty, unit, cost, optom, sotuv, expiry, kat) {
+    selId = id;
+    pidEl.value  = id;
+    srchEl.value = name;
+    resEl.style.display = 'none';
+    selEl.textContent = '✓ ' + name + '  (Omborda: ' + qty + ' ' + unit + ')';
+    selEl.style.display = 'block';
+    katVal.textContent = kat;
+    katRow.style.display = 'block';
+    if (cost  > 0) costEl.value   = cost;
+    if (optom > 0) optomEl.value  = optom;
+    if (sotuv > 0) sotuvEl.value  = sotuv;
+    if (expiry)    expiryEl.value = expiry;
+    // Miqdor inputiga fokus
+    document.querySelector('input[name="qty"]').focus();
+}
+
+// ── Nom bo'yicha qidiruv ──
 srchEl.addEventListener('input', function(){
     var q = this.value.toLowerCase().trim();
     pidEl.value = '';
@@ -275,31 +309,76 @@ srchEl.addEventListener('input', function(){
     katRow.style.display = 'none';
     selId = 0;
     if (!q) { resEl.style.display='none'; return; }
-    var filtered = products.filter(function(p){ return p.name.toLowerCase().includes(q); }).slice(0,10);
+    var filtered = products.filter(function(p){
+        return p.name.toLowerCase().includes(q) || (p.barcode && p.barcode.includes(q));
+    }).slice(0,10);
     if (!filtered.length) { resEl.style.display='none'; return; }
     resEl.innerHTML = filtered.map(function(p){
         return '<div class="ps-item" onclick="selectProd('+p.id+','+JSON.stringify(p.name)+','+p.quantity+','+JSON.stringify(p.unit)+','+p.purchase_price+','+p.optom_price+','+p.price+','+JSON.stringify(p.expiry_date)+','+JSON.stringify(p.kategoriya)+')">'
         + '<strong>' + esc(p.name) + '</strong>'
-        + '<div class="ps-qty">Omborda: ' + p.quantity + ' ' + esc(p.unit) + ' &nbsp;|&nbsp; Kat: ' + esc(p.kategoriya) + '</div>'
+        + '<div class="ps-qty">Omborda: ' + p.quantity + ' ' + esc(p.unit)
+        + (p.barcode ? ' &nbsp;|&nbsp; 🔖 ' + esc(p.barcode) : '')
+        + ' &nbsp;|&nbsp; 📂 ' + esc(p.kategoriya) + '</div>'
         + '</div>';
     }).join('');
     resEl.style.display = 'block';
 });
 
-function selectProd(id, name, qty, unit, cost, optom, sotuv, expiry, kat) {
-    selId = id;
-    pidEl.value = id;
-    srchEl.value = name;
-    resEl.style.display = 'none';
-    selEl.textContent = '✓ ' + name + ' (Omborda: ' + qty + ' ' + unit + ')';
-    selEl.style.display = 'block';
-    katVal.textContent = kat;
-    katRow.style.display = 'block';
-    if (cost  > 0) costEl.value  = cost;
-    if (optom > 0) optomEl.value = optom;
-    if (sotuv > 0) sotuvEl.value = sotuv;
-    if (expiry)    expiryEl.value = expiry;
-}
+// ── BARCODE SCANNER — Enter bosilganda shtrix-kod bilan tovar toppish ──
+var barcodeBuffer = '';
+var barcodeTimer  = null;
+
+barcodeEl.addEventListener('keydown', function(e){
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        var code = barcodeEl.value.trim();
+        if (!code) return;
+        // Avval aniq barcode match
+        var found = null;
+        for (var i=0; i<products.length; i++) {
+            if (products[i].barcode && products[i].barcode === code) { found = products[i]; break; }
+        }
+        // Topilmasa nom bo'yicha qidirish
+        if (!found) {
+            var lower = code.toLowerCase();
+            for (var i=0; i<products.length; i++) {
+                if (products[i].name.toLowerCase().includes(lower)) { found = products[i]; break; }
+            }
+        }
+        if (found) {
+            selectProd(found.id, found.name, found.quantity, found.unit,
+                       found.purchase_price, found.optom_price, found.price,
+                       found.expiry_date, found.kategoriya);
+            barcodeEl.value = '';
+            barcodeStatus.textContent = '✅ ' + found.name;
+            barcodeStatus.style.color = '#05CD99';
+        } else {
+            barcodeStatus.textContent = '❌ Topilmadi: ' + code;
+            barcodeStatus.style.color = '#EE5D50';
+            barcodeEl.select();
+        }
+        return;
+    }
+});
+
+// Tashqi skaner (USB/Bluetooth) — tez kiritish detection
+// Skaner odatda 50ms ichida barcha belgilarni yozadi
+document.addEventListener('keypress', function(e){
+    // Faqat input outside form focus bo'lsa
+    var tag = document.activeElement.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+    clearTimeout(barcodeTimer);
+    barcodeBuffer += e.key;
+
+    barcodeTimer = setTimeout(function(){
+        if (barcodeBuffer.length >= 3) {
+            barcodeEl.value = barcodeBuffer;
+            barcodeEl.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter', bubbles:true}));
+        }
+        barcodeBuffer = '';
+    }, 100);
+});
 
 function esc(s) { var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 
