@@ -142,43 +142,85 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 .grid{
   flex:1;overflow-y:auto;overflow-x:hidden;
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
-  gap:8px;padding:8px 10px 20px;
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:10px;padding:10px 10px 20px;
   align-content:start;
 }
 .grid::-webkit-scrollbar{width:3px;}
 .grid::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:4px;}
 
-/* PRODUCT CARD — sotuvchi dasturidagi kabi */
+/* PRODUCT CARD — compact, chiroyli */
 .pcard{
-  background:#fff;border-radius:12px;
-  border:2px solid var(--border);
-  padding:10px 10px 8px;
+  background:#fff;border-radius:14px;
+  border:1.5px solid var(--border);
+  padding:0;
   cursor:pointer;position:relative;
   transition:.15s;
   display:flex;flex-direction:column;
-  justify-content:space-between;
-  min-height:120px;
-  box-shadow:0 2px 4px rgba(0,0,0,.03);
+  overflow:hidden;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
 }
-.pcard:active{transform:scale(.95);background:#f8fafc;}
-.pcard.added{border-color:var(--green);}
+.pcard:active{transform:scale(.96);box-shadow:0 1px 4px rgba(0,0,0,.1);}
+.pcard.in-cart{border-color:var(--primary);box-shadow:0 0 0 2px rgba(79,70,229,.15);}
+
+/* Rangli yuqori chiziq (kategoriyaga qarab) */
+.pcard-top{
+  height:5px;
+  background:linear-gradient(90deg,var(--primary),#818cf8);
+  flex-shrink:0;
+}
+
+.pcard-body{
+  padding:11px 12px 12px;
+  display:flex;flex-direction:column;
+  flex:1;
+}
+
+/* Miqdor badge + qo'shish tugmasi bir qatorda */
+.pcard-row1{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:8px;
+}
 .stock-badge{
-  position:absolute;top:7px;right:7px;
-  font-size:10px;font-weight:700;
+  font-size:11px;font-weight:700;
   background:#f1f5f9;color:var(--muted);
-  padding:2px 6px;border-radius:6px;
+  padding:3px 8px;border-radius:20px;
+  line-height:1;
 }
 .stock-badge.low{background:#fff7ed;color:#f59e0b;}
+.stock-badge.empty{background:#fee2e2;color:var(--red);}
+
+/* + tugmasi */
+.add-btn{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--primary);color:#fff;
+  border:none;font-size:18px;font-weight:400;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;line-height:1;
+  box-shadow:0 2px 6px rgba(79,70,229,.35);
+  transition:.15s;
+}
+.add-btn:active{transform:scale(.88);background:var(--primary-d);}
+.pcard.in-cart .add-btn{background:var(--green);}
+
 .pname{
-  font-weight:700;font-size:12px;color:var(--dark);
-  line-height:1.3;margin-top:12px;
+  font-weight:700;font-size:13px;color:var(--dark);
+  line-height:1.35;
   overflow:hidden;display:-webkit-box;
   -webkit-line-clamp:2;-webkit-box-orient:vertical;
+  margin-bottom:8px;flex:1;
 }
-.pprice{font-size:14px;font-weight:900;color:var(--primary);margin-top:6px;}
-.punit{font-size:10px;color:var(--muted);font-weight:600;}
-.pminq{font-size:10px;color:#f59e0b;font-weight:700;margin-top:2px;}
+.pcard-price-row{
+  display:flex;align-items:baseline;justify-content:space-between;
+  margin-top:auto;
+}
+.pprice{font-size:15px;font-weight:900;color:var(--primary);}
+.punit{font-size:11px;color:var(--muted);font-weight:600;}
+.pminq{
+  font-size:10px;color:#f59e0b;font-weight:700;
+  background:#fff7ed;padding:2px 7px;border-radius:10px;
+  margin-top:5px;display:inline-block;
+}
 
 /* FLOATING CART BAR — o'ng pastda */
 .cart-bar{
@@ -355,18 +397,19 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
   /* BANNER: kichik */
   .banner{ margin:6px 8px 0; padding:7px 10px; font-size:11px; }
 
-  /* TOVAR GRID: 2 ustun, katta kartochkalar */
+  /* TOVAR GRID: 2 ustun, compact */
   .grid{
     grid-template-columns: repeat(2, 1fr);
     gap:8px;
-    padding:8px 8px 90px; /* pastda savat uchun joy */
+    padding:8px 8px 90px;
   }
 
-  /* TOVAR KARTOCHKA: kattaroq, to'liqroq */
-  .pcard{ min-height:140px; padding:10px; border-radius:14px; border-width:1.5px; }
-  .pname{ font-size:13px; margin-top:14px; }
-  .pprice{ font-size:15px; font-weight:900; }
-  .stock-badge{ font-size:11px; padding:3px 7px; }
+  /* TOVAR KARTOCHKA: kompakt, qulay */
+  .pcard{ border-radius:14px; }
+  .pcard-body{ padding:10px 11px 11px; }
+  .pname{ font-size:13px; }
+  .pprice{ font-size:14px; }
+  .add-btn{ width:30px; height:30px; font-size:20px; }
 
   /* SAVAT TUGMA: pastda to'liq kenglik (native app kabi) */
   .cart-bar{
@@ -481,11 +524,20 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 
     <!-- MAHSULOTLAR -->
     <div class="grid" id="grid">
-      <?php foreach($products as $p):
+      <?php
+      // Kategoriyaga rang berish
+      $catColors = ['#4f46e5','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#84cc16','#f97316','#6366f1'];
+      $catColorMap = [];
+      $ci = 0;
+      foreach($categories as $c){ $catColorMap[$c['name']] = $catColors[$ci % count($catColors)]; $ci++; }
+
+      foreach($products as $p):
         $dispPrice = $p['optom_price'] > 0 ? $p['optom_price'] : $p['price'];
-        $minQ = max(1,(int)$p['min_qty']);
-        $unit = $p['unit'] ?: 'dona';
-        $lowStock = $p['quantity'] <= 5;
+        $minQ  = max(1,(int)$p['min_qty']);
+        $unit  = $p['unit'] ?: 'dona';
+        $qty   = (int)$p['quantity'];
+        $clr   = $catColorMap[$p['kategoriya']] ?? '#4f46e5';
+        $lowStock = $qty <= 5;
       ?>
       <div class="pcard"
            data-id="<?= $p['id'] ?>"
@@ -494,13 +546,21 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
            data-price="<?= $dispPrice ?>"
            data-minq="<?= $minQ ?>"
            data-unit="<?= htmlspecialchars($unit) ?>"
-           data-stock="<?= (int)$p['quantity'] ?>"
-           onclick="addToCart(this)">
-        <div class="stock-badge <?= $lowStock?'low':'' ?>"><?= (int)$p['quantity'] ?></div>
-        <div class="pname"><?= htmlspecialchars($p['name']) ?></div>
-        <div>
-          <div class="pprice"><?= number_format($dispPrice,0,'.',' ') ?> UZS</div>
-          <?php if($minQ>1): ?><div class="pminq">📦 Min: <?= $minQ ?> <?= htmlspecialchars($unit) ?></div><?php endif; ?>
+           data-stock="<?= $qty ?>">
+        <!-- Rangli chiziq -->
+        <div class="pcard-top" style="background:linear-gradient(90deg,<?= $clr ?>,<?= $clr ?>aa)"></div>
+        <div class="pcard-body">
+          <div class="pcard-row1">
+            <span class="stock-badge <?= $qty<=0?'empty':($lowStock?'low':'') ?>">
+              <?= $qty <= 0 ? 'Tugagan' : $qty.' '.$unit ?>
+            </span>
+            <button class="add-btn" onclick="addToCart(this.closest('.pcard'))">+</button>
+          </div>
+          <div class="pname"><?= htmlspecialchars($p['name']) ?></div>
+          <div class="pcard-price-row">
+            <div class="pprice" style="color:<?= $clr ?>"><?= number_format($dispPrice,0,'.',' ') ?> <span style="font-size:11px;font-weight:700">UZS</span></div>
+            <?php if($minQ>1): ?><div class="pminq">min <?= $minQ ?></div><?php endif; ?>
+          </div>
         </div>
       </div>
       <?php endforeach; ?>
@@ -638,6 +698,9 @@ function addToCart(card) {
   const unit  = card.dataset.unit || 'dona';
   const stock = parseInt(card.dataset.stock) || 0;
   const name  = card.querySelector('.pname').textContent.trim();
+  const btn   = card.querySelector('.add-btn');
+
+  if (stock <= 0) return;
 
   if (cart[id]) {
     const next = cart[id].qty + minQ;
@@ -647,18 +710,33 @@ function addToCart(card) {
     cart[id] = {id,name,price,minQ,unit,stock,qty:minQ};
   }
   flashCard(card,'green');
+  // + tugmasiga animatsiya
+  if(btn){ btn.textContent='✓'; setTimeout(()=>btn.textContent='+',800); }
   syncCart();
 }
 
 function flashCard(card, color) {
-  card.style.borderColor = color === 'green' ? 'var(--green)' : 'var(--red)';
-  setTimeout(()=>card.style.borderColor='', 700);
+  if(color==='green'){
+    card.classList.add('in-cart');
+  } else {
+    card.style.borderColor='var(--red)';
+    setTimeout(()=>card.style.borderColor='',700);
+  }
+}
+
+// Savat yangilanganda kartochkalarni belgilash
+function markCartCards(){
+  document.querySelectorAll('.pcard').forEach(c=>{
+    const id = parseInt(c.dataset.id);
+    if(cart[id]) c.classList.add('in-cart');
+    else c.classList.remove('in-cart');
+  });
 }
 
 // ── Savatni server bilan sinxronlash
 async function syncCart() {
   updateUI();
-  // Background server sync
+  markCartCards();
   const fd = new FormData();
   fd.append('cart', JSON.stringify(cart));
   fetch('/mijoz/api.php?action=sync_cart', {method:'POST',body:fd}).catch(()=>{});
@@ -850,6 +928,9 @@ async function loadOrders() {
 }
 
 function escH(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Sahifa ochilganda savatdagilarni belgilash
+markCartCards();
 </script>
 </body>
 </html>
