@@ -72,84 +72,109 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 }
 
 /* ── SEARCH ── */
-.search-bar{padding:12px 16px;}
+.search-bar{padding:10px 12px 8px;background:#fff;border-bottom:1px solid var(--border);}
 .search-wrap{position:relative;}
 .search-wrap input{
-  width:100%;padding:12px 16px 12px 44px;
-  background:#fff;border:1px solid var(--border);border-radius:12px;
-  font-size:15px;color:var(--text);transition:.2s;
+  width:100%;padding:10px 16px 10px 40px;
+  background:#f8fafc;border:1px solid var(--border);border-radius:10px;
+  font-size:14px;color:var(--text);transition:.2s;
 }
-.search-wrap input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,.12);}
+.search-wrap input:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(99,102,241,.1);}
 .search-wrap input::placeholder{color:#94a3b8;}
-.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:18px;color:#94a3b8;}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:16px;color:#94a3b8;}
 
 /* ── INFO BANNER ── */
 .banner{
-  margin:0 16px 14px;
   background:linear-gradient(135deg,#ede9fe,#dbeafe);
-  border-radius:12px; padding:12px 16px;
-  display:flex; align-items:center; gap:10px;
-  font-size:13px; color:#4338ca; font-weight:600;
+  border-radius:10px; padding:10px 12px;
+  display:flex; align-items:center; gap:8px;
+  font-size:12px; color:#4338ca; font-weight:600;
   border:1px solid #c7d2fe;
 }
 
-/* ── KATEGORIYA TABS ── */
-.cat-tabs{
-  display:flex;gap:8px;overflow-x:auto;
-  padding:0 16px 14px;scrollbar-width:none;
+/* ── BODY LAYOUT ── */
+.main-layout{
+  display:flex;
+  height:calc(100vh - 60px);  /* header = 60px */
+  overflow:hidden;
 }
-.cat-tabs::-webkit-scrollbar{display:none;}
+
+/* ── CHAP SIDEBAR — Kategoriyalar ── */
+.cat-sidebar{
+  width:76px;flex-shrink:0;
+  background:#fff;border-right:1px solid var(--border);
+  overflow-y:auto;scrollbar-width:none;
+  display:flex;flex-direction:column;gap:2px;
+  padding:8px 6px;
+}
+.cat-sidebar::-webkit-scrollbar{display:none;}
 .cat-tab{
-  flex-shrink:0;padding:7px 16px;border-radius:999px;
-  font-size:13px;font-weight:700;cursor:pointer;border:none;
-  background:#fff;color:var(--muted);border:1.5px solid var(--border);
-  transition:.18s;white-space:nowrap;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:10px 4px;border-radius:12px;cursor:pointer;border:none;
+  background:transparent;color:var(--muted);transition:.18s;
+  font-size:10px;font-weight:700;text-align:center;line-height:1.2;
+  word-break:break-word;
 }
-.cat-tab.active{
-  background:var(--primary);color:#fff;border-color:var(--primary);
-  box-shadow:0 2px 8px rgba(99,102,241,.3);
+.cat-tab .ct-icon{
+  font-size:22px;width:40px;height:40px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  background:#f1f5f9;transition:.18s;
 }
+.cat-tab.active{color:var(--primary);}
+.cat-tab.active .ct-icon{
+  background:linear-gradient(135deg,var(--primary),var(--primary-d));
+  color:#fff;box-shadow:0 3px 8px rgba(99,102,241,.35);
+}
+.cat-tab:active{transform:scale(.93);}
+
+/* ── O'NG MAIN AREA ── */
+.main-area{
+  flex:1;overflow-y:auto;
+  display:flex;flex-direction:column;
+}
+.main-area::-webkit-scrollbar{width:3px;}
+.main-area::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:4px;}
 
 /* ── GRID ── */
 .products-grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
-  gap:12px; padding:0 16px 130px;
+  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:10px; padding:10px 10px 130px;
 }
 @media(max-width:360px){.products-grid{grid-template-columns:1fr 1fr;}}
 
 /* ── FLOATING CART BAR ── */
 .cart-bar{
-  position:fixed;bottom:0;left:0;right:0;
-  padding:12px 16px 20px;
-  background:linear-gradient(to top, #fff 80%, rgba(255,255,255,0));
+  position:fixed;bottom:0;left:76px;right:0;   /* sidebar width = 76px */
+  padding:10px 12px 16px;
+  background:linear-gradient(to top, rgba(241,245,249,1) 75%, rgba(241,245,249,0));
   z-index:150;
   transition:opacity .3s;
 }
 .cart-bar-inner{
   background:linear-gradient(135deg,var(--primary),var(--primary-d));
-  border-radius:18px;
-  padding:14px 18px;
+  border-radius:16px;
+  padding:12px 16px;
   display:flex;align-items:center;justify-content:space-between;
-  box-shadow:0 8px 24px rgba(99,102,241,.45);
+  box-shadow:0 6px 20px rgba(99,102,241,.4);
   cursor:pointer;
   transition:.2s;
 }
 .cart-bar-inner:active{transform:scale(.98);}
-.cb-left{display:flex;align-items:center;gap:10px;}
+.cb-left{display:flex;align-items:center;gap:8px;}
 .cb-badge{
-  background:rgba(255,255,255,.25);
-  border-radius:10px;padding:4px 10px;
+  background:rgba(255,255,255,.22);
+  border-radius:8px;padding:3px 9px;
   font-size:13px;font-weight:800;color:#fff;
 }
-.cb-text{font-size:14px;font-weight:700;color:rgba(255,255,255,.9);}
-.cb-total{font-size:17px;font-weight:900;color:#fff;}
-.cb-arrow{font-size:20px;color:rgba(255,255,255,.85);}
+.cb-text{font-size:13px;font-weight:700;color:rgba(255,255,255,.9);}
+.cb-total{font-size:16px;font-weight:900;color:#fff;}
+.cb-arrow{font-size:20px;color:rgba(255,255,255,.8);}
 
 /* empty cart bar */
 .cart-bar.empty .cart-bar-inner{
   background:linear-gradient(135deg,#94a3b8,#64748b);
-  box-shadow:0 4px 12px rgba(0,0,0,.12);
+  box-shadow:0 3px 10px rgba(0,0,0,.1);
 }
 
 /* ── CARD ── */
@@ -322,59 +347,81 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 
 <!-- HEADER -->
 <div class="header">
-  <span class="logo-txt"><?= htmlspecialchars($site) ?></span>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <button class="cart-btn" onclick="openDrawer()" id="cartBtn">
+      🛒
+      <span class="cart-badge" id="cartBadge" style="<?= $cartCount?'':'display:none' ?>"><?= $cartCount ?></span>
+    </button>
+    <span class="logo-txt"><?= htmlspecialchars($site) ?></span>
+  </div>
   <div class="header-right">
     <div class="user-chip">
       <div class="av"><?= mb_strtoupper(mb_substr($ism,0,1)) ?></div>
       <span><?= htmlspecialchars($ism) ?></span>
     </div>
     <a href="/auth/logout.php" class="logout-link" title="Chiqish">🚪</a>
-    <button class="cart-btn" onclick="openDrawer()" id="cartBtn">
-      🛒
-      <span class="cart-badge" id="cartBadge" style="<?= $cartCount?'':'display:none' ?>"><?= $cartCount ?></span>
-    </button>
   </div>
 </div>
 
-<!-- SEARCH -->
-<div class="search-bar">
+<!-- SEARCH (header ostida) -->
+<div class="search-bar" style="padding:10px 12px 8px;">
   <div class="search-wrap">
     <span class="search-icon">🔍</span>
-    <input type="text" id="searchInp" placeholder="Mahsulot qidiring..." autocomplete="off" inputmode="search">
+    <input type="text" id="searchInp" placeholder="Qidirish..." autocomplete="off" inputmode="search">
   </div>
 </div>
 
-<!-- KATEGORIYA TABS -->
-<div class="cat-tabs" id="catTabs">
-  <button class="cat-tab active" onclick="filterCat('',this)">🏠 Barchasi</button>
-  <?php foreach($categories as $c): ?>
-  <button class="cat-tab" onclick="filterCat(<?= json_encode($c['name']) ?>,this)"><?= htmlspecialchars($c['name']) ?></button>
-  <?php endforeach; ?>
-</div>
+<!-- MAIN LAYOUT: sidebar + content -->
+<div class="main-layout">
 
-<!-- BANNER -->
-<div class="banner">
-  <span style="font-size:20px;">🚚</span>
-  <span>1 500 000 UZS dan yuqori buyurtmada <strong>BEPUL yetkazish!</strong></span>
-</div>
-
-<!-- MAHSULOTLAR -->
-<div class="products-grid" id="grid">
-  <!-- JS to'ldiradi -->
-  <?php for($i=0;$i<8;$i++): ?>
-  <div class="p-card">
-    <div style="width:100%;padding-top:100%;position:relative;">
-      <div class="skel" style="position:absolute;top:0;left:0;width:100%;height:100%;border-radius:0;"></div>
-    </div>
-    <div class="p-body" style="gap:6px;">
-      <div class="skel" style="height:13px;width:85%;border-radius:6px;"></div>
-      <div class="skel" style="height:11px;width:50%;border-radius:6px;"></div>
-      <div class="skel" style="height:16px;width:60%;border-radius:6px;margin-top:4px;"></div>
-    </div>
-    <div class="skel" style="height:38px;border-radius:0 0 14px 14px;"></div>
+  <!-- CHAP SIDEBAR — Kategoriyalar -->
+  <div class="cat-sidebar" id="catSidebar">
+    <?php
+    $catIcons = ['🏠','🥤','🍫','🧴','🧹','📦','🍕','🥛','🧃','🍬','🧊','🍞','🌿','🐟','🥩','🍳','🧺','💊','🏮','🎁'];
+    $iconIdx = 0;
+    ?>
+    <button class="cat-tab active" onclick="filterCat('',this)">
+      <div class="ct-icon">🏠</div>
+      Barchasi
+    </button>
+    <?php foreach($categories as $c):
+      $ico = $catIcons[$iconIdx % count($catIcons)]; $iconIdx++;
+    ?>
+    <button class="cat-tab" onclick="filterCat(<?= json_encode($c['name']) ?>,this)">
+      <div class="ct-icon"><?= $ico ?></div>
+      <?= htmlspecialchars(mb_substr($c['name'],0,8)) ?>
+    </button>
+    <?php endforeach; ?>
   </div>
-  <?php endfor; ?>
-</div>
+
+  <!-- O'NG TARAF — Mahsulotlar -->
+  <div class="main-area" id="mainArea">
+
+    <!-- BANNER -->
+    <div class="banner" style="margin:8px 10px;">
+      <span style="font-size:18px;">🚚</span>
+      <span>1.5M dan yuqorida <strong>BEPUL yetkazish!</strong></span>
+    </div>
+
+    <!-- MAHSULOTLAR GRID -->
+    <div class="products-grid" id="grid">
+      <?php for($i=0;$i<6;$i++): ?>
+      <div class="p-card">
+        <div style="width:100%;padding-top:100%;position:relative;">
+          <div class="skel" style="position:absolute;top:0;left:0;width:100%;height:100%;border-radius:0;"></div>
+        </div>
+        <div class="p-body" style="gap:6px;">
+          <div class="skel" style="height:12px;width:85%;border-radius:5px;"></div>
+          <div class="skel" style="height:10px;width:55%;border-radius:5px;"></div>
+          <div class="skel" style="height:15px;width:65%;border-radius:5px;margin-top:4px;"></div>
+        </div>
+        <div class="skel" style="height:36px;border-radius:0 0 14px 14px;"></div>
+      </div>
+      <?php endfor; ?>
+    </div>
+
+  </div><!-- /main-area -->
+</div><!-- /main-layout -->
 
 <!-- FLOATING CART BAR -->
 <?php
