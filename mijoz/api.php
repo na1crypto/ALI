@@ -17,6 +17,7 @@ if ($action === 'products') {
     $q = mysqli_real_escape_string($conn, $_POST['q'] ?? '');
     $where = $q ? "AND (p.name LIKE '%$q%' OR p.barcode='$q')" : "";
     $sql = "SELECT p.id, p.name, p.price, p.optom_price, p.quantity, p.barcode,
+                   IFNULL(p.min_qty, 1) AS min_qty, IFNULL(p.unit,'dona') AS unit,
                    IFNULL(k.name,'') AS kategoriya
             FROM products p
             LEFT JOIN categories k ON p.category_id = k.id
@@ -26,6 +27,7 @@ if ($action === 'products') {
     $res = mysqli_query($conn, $sql);
     $list = [];
     if ($res) while ($r = mysqli_fetch_assoc($res)) {
+        $min = max(1, (int)$r['min_qty']);
         $list[] = [
             'id'          => (int)$r['id'],
             'name'        => $r['name'],
@@ -33,6 +35,8 @@ if ($action === 'products') {
             'optom_price' => (float)$r['optom_price'],
             'quantity'    => (int)$r['quantity'],
             'barcode'     => $r['barcode'],
+            'min_qty'     => $min,
+            'unit'        => $r['unit'],
             'kategoriya'  => $r['kategoriya'],
         ];
     }
@@ -42,22 +46,43 @@ if ($action === 'products') {
 
 // ── Savatga qo'shish ──
 if ($action === 'add_cart') {
-    $pid   = (int)($_POST['id'] ?? 0);
-    $qty   = max(1, (int)($_POST['qty'] ?? 1));
-    $row   = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM products WHERE id=$pid AND quantity>0"));
+    $pid = (int)($_POST['id'] ?? 0);
+    $qty = max(1, (int)($_POST['qty'] ?? 1));
+    $row = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM products WHERE id=$pid AND quantity>0"));
     if (!$row) { echo json_encode(['status'=>'error','message'=>'Mahsulot topilmadi']); exit; }
+
+    $min_qty = max(1, (int)($row['min_qty'] ?? 1));
+
+    // Minimal cheklov tekshiruvi
+    if ($qty < $min_qty) {
+        echo json_encode([
+            'status'  => 'error',
+            'message' => "Minimal buyurtma: $min_qty " . ($row['unit'] ?: 'dona')
+        ]);
+        exit;
+    }
+    // min_qty ga bo'linishi kerak
+    $qty = (int)(round($qty / $min_qty) * $min_qty);
+    if ($qty < $min_qty) $qty = $min_qty;
 
     if (!isset($_SESSION['cart'])) $_SESSION['cart'] = [];
     $cart = &$_SESSION['cart'];
+    $price = (float)$row['optom_price'] ?: (float)$row['price'];
+
     if (isset($cart[$pid])) {
-        $cart[$pid]['qty'] = min($cart[$pid]['qty'] + $qty, (int)$row['quantity']);
+        $new_qty = $cart[$pid]['qty'] + $qty;
+        // Stokdan oshmasin, lekin min_qty ga karrali bo'lsin
+        $max_allowed = (int)floor((int)$row['quantity'] / $min_qty) * $min_qty;
+        $cart[$pid]['qty'] = min($new_qty, $max_allowed ?: (int)$row['quantity']);
     } else {
         $cart[$pid] = [
-            'id'    => $pid,
-            'name'  => $row['name'],
-            'price' => (float)$row['optom_price'] ?: (float)$row['price'],
-            'stock' => (int)$row['quantity'],
-            'qty'   => $qty,
+            'id'      => $pid,
+            'name'    => $row['name'],
+            'price'   => $price,
+            'stock'   => (int)$row['quantity'],
+            'min_qty' => $min_qty,
+            'unit'    => $row['unit'] ?: 'dona',
+            'qty'     => $qty,
         ];
     }
     echo json_encode(['status'=>'ok','cart_count'=>array_sum(array_column($cart,'qty'))]);
@@ -79,6 +104,10 @@ if ($action === 'update_qty') {
     if ($qty <= 0) {
         unset($_SESSION['cart'][$pid]);
     } elseif (isset($_SESSION['cart'][$pid])) {
+        $min = $_SESSION['cart'][$pid]['min_qty'] ?? 1;
+        // min_qty ga karrali qilib yumalash
+        $qty = (int)(round($qty / $min) * $min);
+        if ($qty < $min) $qty = $min;
         $_SESSION['cart'][$pid]['qty'] = min($qty, $_SESSION['cart'][$pid]['stock']);
     }
     echo json_encode(['status'=>'ok']);
@@ -96,10 +125,10 @@ if ($action === 'get_cart') {
 
 // ── Buyurtma berish ──
 if ($action === 'checkout') {
-    $cart     = $_SESSION['cart'] ?? [];
+    $cart      = $_SESSION['cart'] ?? [];
     $yetkazish = (int)($_POST['yetkazish'] ?? 0);
-    $manzil   = mysqli_real_escape_string($conn, trim($_POST['manzil'] ?? ''));
-    $izoh     = mysqli_real_escape_string($conn, trim($_POST['izoh'] ?? ''));
+    $manzil    = mysqli_real_escape_string($conn, trim($_POST['manzil'] ?? ''));
+    $izoh      = mysqli_real_escape_string($conn, trim($_POST['izoh'] ?? ''));
 
     if (empty($cart)) {
         echo json_encode(['status'=>'error','message'=>'Savat bo\'sh!']); exit;
@@ -110,20 +139,17 @@ if ($action === 'checkout') {
         $user_id = (int)$_SESSION['user_id'];
         $total = 0;
         foreach ($cart as $item) $total += $item['price'] * $item['qty'];
-        $final = $total; // yetkazish bepul
+        $final = $total;
 
-        // Note matni
         $note_text = $yetkazish
             ? "Yetkazish: $manzil" . ($izoh ? ". $izoh" : "")
             : "Olib ketadi" . ($izoh ? ". $izoh" : "");
-        $note_esc = mysqli_real_escape_string($conn, $note_text);
+        $note_esc  = mysqli_real_escape_string($conn, $note_text);
         $sale_type = $yetkazish ? 'yetkazish' : 'oddiy';
 
-        // sales ga yozish (yangi sxema: note, customer_id, sale_type bor)
         $sql_sale = "INSERT INTO sales (id, user_id, customer_id, total_price, payment_method, sale_type, note)
                      VALUES (NULL, $user_id, NULL, $final, 'online', '$sale_type', '$note_esc')";
         if (!mysqli_query($conn, $sql_sale)) {
-            // Eski sxema uchun fallback
             $sql_sale = "INSERT INTO sales (id, user_id, total_price, payment_method, note)
                          VALUES (NULL, $user_id, $final, 'naqd', '$note_esc')";
             if (!mysqli_query($conn, $sql_sale)) {
@@ -132,7 +158,6 @@ if ($action === 'checkout') {
         }
         $sale_id = mysqli_insert_id($conn);
 
-        // sale_items ga yozish — trigger stokni avtomatik kamaytiradi
         foreach ($cart as $item) {
             $p  = (int)$item['id'];
             $q  = (int)$item['qty'];
@@ -143,7 +168,6 @@ if ($action === 'checkout') {
             if (!mysqli_query($conn, $sql_item)) {
                 throw new Exception("Mahsulot yozilmadi: " . mysqli_error($conn));
             }
-            // Trigger yo'q bo'lsa qo'lda kamaytirish
             mysqli_query($conn, "UPDATE products SET quantity=quantity-$q WHERE id=$p");
         }
 

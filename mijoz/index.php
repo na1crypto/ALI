@@ -110,6 +110,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 }
 .p-name{font-size:13px;font-weight:700;color:var(--text);line-height:1.3;}
 .p-kat{font-size:11px;color:var(--muted);margin-top:-4px;}
+.p-minqty{font-size:11px;color:#f59e0b;font-weight:700;margin-top:2px;}
 .p-price-block{margin-top:2px;}
 .p-optom{font-size:16px;font-weight:800;color:var(--primary);}
 .p-retail{font-size:11px;color:var(--muted);text-decoration:line-through;}
@@ -338,17 +339,23 @@ function renderGrid(products) {
     const stockClass = p.quantity <= 5 ? 'low' : '';
     const icons = ['📦','🛍️','🏷️','📋','🎁','💼','🧴','🥤','🍫','🧹'];
     const icon = icons[p.id % icons.length];
+    const minQ  = p.min_qty || 1;
+    const unit  = p.unit || 'dona';
+    const minBadge = minQ > 1
+      ? `<div class="p-minqty">📦 Min: ${minQ} ${unit}</div>`
+      : '';
     return `
     <div class="p-card" id="card_${p.id}">
       <div class="p-icon">${icon}</div>
       <div class="p-name">${escHtml(p.name)}</div>
       ${p.kategoriya?`<div class="p-kat">${escHtml(p.kategoriya)}</div>`:''}
+      ${minBadge}
       <div class="p-price-block">
         <div class="p-optom">${FMT(displayPrice)}</div>
         ${showOptom && p.price !== p.optom_price ? `<div class="p-retail">${FMT(p.price)}</div>`:''}
       </div>
-      <div class="p-stock ${stockClass}">Qoldi: ${p.quantity} dona</div>
-      <button class="add-btn" id="btn_${p.id}" onclick="addCart(${p.id},${displayPrice})">
+      <div class="p-stock ${stockClass}">Qoldi: ${p.quantity} ${unit}</div>
+      <button class="add-btn" id="btn_${p.id}" onclick="addCart(${p.id},${displayPrice},${minQ},'${unit}')">
         ＋ Savatga
       </button>
     </div>`;
@@ -358,11 +365,13 @@ function renderGrid(products) {
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 // ── Savatga qo'shish ──
-async function addCart(id, price) {
+async function addCart(id, price, minQty, unit) {
+  minQty = minQty || 1;
+  unit   = unit   || 'dona';
   const btn = document.getElementById('btn_'+id);
   btn.disabled = true;
   const fd = new FormData();
-  fd.append('id', id); fd.append('qty', 1);
+  fd.append('id', id); fd.append('qty', minQty);
   const res = await fetch('/mijoz/api.php?action=add_cart',{method:'POST',body:fd});
   const d = await res.json();
   if (d.status === 'ok') {
@@ -376,6 +385,8 @@ async function addCart(id, price) {
     }, 1200);
     if (document.getElementById('drawer').classList.contains('open')) loadCart();
   } else {
+    // Minimal cheklov xatosi
+    showToast(d.message || 'Xatolik', 'err');
     btn.disabled = false;
   }
 }
@@ -414,19 +425,26 @@ async function loadCart() {
     return;
   }
 
-  body.innerHTML = d.items.map(item => `
+  body.innerHTML = d.items.map(item => {
+    const minQ = item.min_qty || 1;
+    const unit = item.unit   || 'dona';
+    const prevQty = Math.max(minQ, item.qty - minQ);
+    const nextQty = item.qty + minQ;
+    return `
     <div class="cart-item" id="ci_${item.id}">
       <div style="flex:1">
         <div class="ci-name">${escHtml(item.name)}</div>
-        <div class="ci-price">${FMT(item.price)} x ${item.qty} = <b>${FMT(item.price*item.qty)}</b></div>
+        ${minQ > 1 ? `<div style="font-size:11px;color:#f59e0b;font-weight:600;">📦 Min: ${minQ} ${unit}</div>` : ''}
+        <div class="ci-price">${FMT(item.price)} × ${item.qty} ${unit} = <b>${FMT(item.price*item.qty)}</b></div>
       </div>
       <div class="qty-ctrl">
-        <button class="qty-btn" onclick="changeQty(${item.id},${item.qty-1})">−</button>
+        <button class="qty-btn" onclick="changeQty(${item.id},${prevQty},${minQ})"${item.qty <= minQ ? ' style="opacity:.35"' : ''}>−</button>
         <span class="qty-num">${item.qty}</span>
-        <button class="qty-btn" onclick="changeQty(${item.id},${item.qty+1},${item.stock||99})">＋</button>
+        <button class="qty-btn" onclick="changeQty(${item.id},${nextQty},${minQ},${item.stock||99})">＋</button>
         <button class="del-btn" onclick="removeItem(${item.id})">🗑</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   panel.style.display = 'block';
   const total = d.total;
@@ -449,8 +467,13 @@ function toggleDelivery() {
   document.getElementById('manzilWrap').style.display = chk.checked ? 'block' : 'none';
 }
 
-async function changeQty(id, qty, max) {
+async function changeQty(id, qty, minQ, max) {
+  minQ = minQ || 1;
+  if (qty < minQ) { removeItem(id); return; }
   if (qty > (max||999)) return;
+  // min_qty ga karrali qilib yumalash
+  qty = Math.round(qty / minQ) * minQ;
+  if (qty < minQ) qty = minQ;
   const fd = new FormData();
   fd.append('id', id); fd.append('qty', qty);
   await fetch('/mijoz/api.php?action=update_qty',{method:'POST',body:fd});
@@ -505,6 +528,23 @@ async function checkout() {
   }
   btn.disabled = false;
   btn.innerHTML = '✅ Buyurtma berish';
+}
+
+// ── Toast xabar ──
+function showToast(msg, type) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);padding:12px 20px;border-radius:12px;font-size:14px;font-weight:700;z-index:9999;transition:.3s;max-width:90vw;text-align:center;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.background = type === 'err' ? '#ef4444' : '#10b981';
+  t.style.color = '#fff';
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 2500);
 }
 
 // ── Qidiruv ──

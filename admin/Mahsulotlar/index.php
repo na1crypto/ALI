@@ -18,6 +18,7 @@ if (isset($_POST['saqlash'])) {
     $price = (float)$_POST['price'];
     $quantity = (float)$_POST['quantity'];
     $unit = mysqli_real_escape_string($conn, $_POST['unit']);
+    $min_qty = max(1, (int)($_POST['min_qty'] ?? 1));
     $expiry_date = !empty($_POST['expiry_date']) ? "'" . mysqli_real_escape_string($conn, $_POST['expiry_date']) . "'" : "NULL";
 
     // Kategoriya mantiqi (Yangi qo'shildimi yoki eskisi tanlandimi?)
@@ -38,8 +39,11 @@ if (isset($_POST['saqlash'])) {
         $category_id = (int)$category_id_post;
     }
 
-    $sql = "INSERT INTO products (barcode, category_id, name, purchase_price, optom_price, price, quantity, unit, expiry_date) 
-            VALUES ('$barcode', '$category_id', '$name', '$purchase_price', '$optom_price', '$price', '$quantity', '$unit', $expiry_date)";
+    // Avval min_qty ustunini qo'shish (bir martalik migration)
+    @mysqli_query($conn, "ALTER TABLE products ADD COLUMN IF NOT EXISTS min_qty INT NOT NULL DEFAULT 1 COMMENT 'Minimal buyurtma miqdori'");
+
+    $sql = "INSERT INTO products (barcode, category_id, name, purchase_price, optom_price, price, quantity, unit, min_qty, expiry_date)
+            VALUES ('$barcode', '$category_id', '$name', '$purchase_price', '$optom_price', '$price', '$quantity', '$unit', '$min_qty', $expiry_date)";
 
     if (mysqli_query($conn, $sql)) {
         echo "<script>alert('Mahsulot muvaffaqiyatli saqlandi!'); window.location.href='index.php';</script>";
@@ -282,6 +286,10 @@ while($c = mysqli_fetch_assoc($cats_query)) {
                                     <option value="blok">Blok</option>
                                     <option value="qop">Qop</option>
                                 </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="bento-label">Min. buyurtma <span class="text-muted font-weight-normal">(dona/blok)</span></label>
+                                <input type="number" name="min_qty" class="bento-input-modal" value="1" min="1" placeholder="1">
                             </div>
                             <div class="col-md-4">
                                 <label class="bento-label">Yaroqlilik <span class="text-muted font-weight-normal">(Ixtiyoriy)</span></label>

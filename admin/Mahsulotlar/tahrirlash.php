@@ -26,12 +26,16 @@ if (isset($_POST['yangilash'])) {
     $price = (float)$_POST['price'];
     $quantity = (float)$_POST['quantity'];
     $unit = mysqli_real_escape_string($conn, $_POST['unit']);
+    $min_qty = max(1, (int)($_POST['min_qty'] ?? 1));
     $expiry_date = !empty($_POST['expiry_date']) ? "'" . mysqli_real_escape_string($conn, $_POST['expiry_date']) . "'" : "NULL";
 
-    $sql = "UPDATE products SET 
-            barcode='$barcode', category_id='$category_id', name='$name', 
-            purchase_price='$purchase_price', optom_price='$optom_price', 
-            price='$price', quantity='$quantity', unit='$unit', expiry_date=$expiry_date 
+    // Avval min_qty ustunini qo'shish (bir martalik migration)
+    @mysqli_query($conn, "ALTER TABLE products ADD COLUMN IF NOT EXISTS min_qty INT NOT NULL DEFAULT 1");
+
+    $sql = "UPDATE products SET
+            barcode='$barcode', category_id='$category_id', name='$name',
+            purchase_price='$purchase_price', optom_price='$optom_price',
+            price='$price', quantity='$quantity', unit='$unit', min_qty='$min_qty', expiry_date=$expiry_date
             WHERE id=$id";
     
     if(mysqli_query($conn, $sql)){
@@ -106,16 +110,22 @@ if (isset($_POST['yangilash'])) {
                                 <input type="number" step="0.001" name="quantity" class="bento-input" value="<?= $product['quantity'] ?>" required>
                             </div>
 
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="bento-label">O'lchov Birligi</label>
                                 <select name="unit" class="bento-input">
                                     <option value="dona" <?= $product['unit']=='dona'?'selected':'' ?>>Dona</option>
                                     <option value="kg" <?= $product['unit']=='kg'?'selected':'' ?>>Kg</option>
                                     <option value="litr" <?= $product['unit']=='litr'?'selected':'' ?>>Litr</option>
                                     <option value="blok" <?= $product['unit']=='blok'?'selected':'' ?>>Blok</option>
+                                    <option value="qop" <?= $product['unit']=='qop'?'selected':'' ?>>Qop</option>
                                 </select>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <label class="bento-label">Min. buyurtma <small class="text-muted">(dona/blok)</small></label>
+                                <input type="number" name="min_qty" class="bento-input" min="1"
+                                       value="<?= (int)($product['min_qty'] ?? 1) ?>">
+                            </div>
+                            <div class="col-md-4">
                                 <label class="bento-label">Yaroqlilik muddati</label>
                                 <input type="date" name="expiry_date" class="bento-input" value="<?= $product['expiry_date'] ?>">
                             </div>
