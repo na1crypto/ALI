@@ -85,74 +85,91 @@ if (isset($_POST['kirish'])) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Kirish | <?= htmlspecialchars($site_name) ?></title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
     body {
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        height: 100vh; display: flex; align-items: center; justify-content: center;
-        margin: 0; position: relative; overflow: hidden;
+        font-family: 'Segoe UI', -apple-system, sans-serif;
+        min-height: 100vh; display: flex; align-items: center; justify-content: center;
+        padding: 20px; position: relative; overflow: hidden;
     }
-    
-    /* Orqa fondagi chiroyli doiralar (Glow effekt) */
-    .circle-1 { position: absolute; top: 10%; left: 15%; width: 300px; height: 300px; background: #6366f1; border-radius: 50%; filter: blur(100px); opacity: 0.4; z-index: 0; }
-    .circle-2 { position: absolute; bottom: 10%; right: 15%; width: 400px; height: 400px; background: #10b981; border-radius: 50%; filter: blur(120px); opacity: 0.3; z-index: 0; }
-    
+    .circle-1 { position: fixed; top: -80px; left: -80px; width: 300px; height: 300px; background: #6366f1; border-radius: 50%; filter: blur(100px); opacity: 0.35; z-index: 0; }
+    .circle-2 { position: fixed; bottom: -80px; right: -80px; width: 350px; height: 350px; background: #10b981; border-radius: 50%; filter: blur(110px); opacity: 0.25; z-index: 0; }
     .glass-card {
-        background: rgba(255, 255, 255, 0.05);
+        background: rgba(255,255,255,0.06);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255,255,255,0.12);
         border-radius: 24px;
-        padding: 45px 40px;
+        padding: 40px 36px;
         width: 100%; max-width: 420px;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        color: white;
-        text-align: center;
-        z-index: 1;
+        box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+        color: white; text-align: center; z-index: 1; position: relative;
     }
-    
-    /* 🔴 LOGOTIP UCHUN DIZAYN */
     .logo-box {
-        width: 80px;
-        height: 80px;
-        background: rgba(255, 255, 255, 0.1);
-        border: 2px solid rgba(255, 255, 255, 0.2);
+        width: 76px; height: 76px;
+        background: rgba(255,255,255,0.1);
+        border: 2px solid rgba(255,255,255,0.2);
         border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 20px auto;
-        box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
-        overflow: hidden;
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 18px;
+        box-shadow: 0 8px 24px rgba(99,102,241,0.4);
     }
-    .logo-box i { font-size: 34px; color: #ffffff; }
-    .logo-box img { width: 100%; height: 100%; object-fit: cover; } /* Rasm qo'yilsa moslashadi */
-
+    .logo-box i { font-size: 30px; color: #fff; }
+    .brand-text { font-weight: 900; font-size: 28px; letter-spacing: 1px; margin-bottom: 4px; color: #fff; text-transform: uppercase; }
+    .brand-sub { color: #94a3b8; font-size: 14px; margin-bottom: 28px; }
+    .input-group { position: relative; margin-bottom: 16px; }
+    .input-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 16px; z-index: 2; }
     .form-control {
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 14px; color: white; height: 55px; padding-left: 55px;
-        font-size: 15px; transition: 0.3s;
+        background: rgba(255,255,255,0.07);
+        border: 1.5px solid rgba(255,255,255,0.15);
+        border-radius: 14px; color: #fff;
+        height: 54px; width: 100%;
+        padding: 0 16px 0 50px;
+        font-size: 15px; transition: .25s;
     }
     .form-control:focus {
-        background: rgba(255, 255, 255, 0.1); border-color: #6366f1; color: white; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+        background: rgba(255,255,255,0.12);
+        border-color: #6366f1; color: #fff;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(99,102,241,0.2);
     }
-    .form-control::placeholder { color: #64748b; }
-    
-    .input-group { position: relative; margin-bottom: 25px; }
-    .input-icon { position: absolute; left: 20px; top: 18px; color: #94a3b8; z-index: 10; font-size: 18px; }
-    
+    .form-control::placeholder { color: #475569; }
     .btn-login {
-        background: linear-gradient(135deg, #6366f1, #4f46e5);
-        border: none; border-radius: 14px; height: 55px; font-weight: 700; font-size: 16px; transition: 0.3s; color: white; width: 100%;
-        margin-top: 10px; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        background: linear-gradient(135deg,#6366f1,#4f46e5);
+        border: none; border-radius: 14px;
+        height: 54px; width: 100%;
+        font-weight: 800; font-size: 16px; color: #fff;
+        margin-top: 8px; cursor: pointer;
+        box-shadow: 0 6px 20px rgba(99,102,241,0.4);
+        transition: .2s; letter-spacing: .3px;
     }
-    .btn-login:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(99, 102, 241, 0.5); color: white; }
-    
-    .brand-text { font-weight: 800; font-size: 30px; letter-spacing: 1px; margin-bottom: 5px; color: #ffffff; text-transform: uppercase;}
-    .brand-sub { color: #94a3b8; font-size: 15px; margin-bottom: 35px; font-weight: 400; }
-    
-    .alert-glass { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; border-radius: 12px; font-weight: 600; }
+    .btn-login:active { transform: scale(.97); }
+    .alert-glass {
+        background: rgba(239,68,68,0.15);
+        border: 1px solid rgba(239,68,68,0.3);
+        color: #fca5a5; border-radius: 12px;
+        font-weight: 600; padding: 12px 16px;
+        margin-bottom: 18px; font-size: 14px;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .reg-link { margin-top: 20px; color: #64748b; font-size: 14px; }
+    .reg-link a { color: #818cf8; font-weight: 700; text-decoration: none; }
+
+    /* 📱 Mobil */
+    @media(max-width:480px){
+        body{ padding: 16px; align-items: flex-end; }
+        .glass-card{
+            border-radius: 24px 24px 0 0;
+            padding: 32px 22px env(safe-area-inset-bottom, 28px);
+            max-width: 100%;
+        }
+        .circle-1,.circle-2{ opacity:.2; }
+        .brand-text{ font-size:24px; }
+        .form-control{ height:52px; font-size:16px; }
+        .btn-login{ height:52px; font-size:15px; }
+    }
   </style>
 </head>
 <body>
@@ -170,26 +187,27 @@ if (isset($_POST['kirish'])) {
     <div class="brand-sub">Tizimga kirish</div>
 
     <?php if ($xato): ?>
-        <div class="alert alert-glass text-sm p-3 mb-4">
-            <i class="fas fa-exclamation-triangle mr-2"></i> <?= $xato; ?>
+        <div class="alert-glass">
+            <i class="fas fa-exclamation-triangle"></i> <?= $xato ?>
         </div>
     <?php endif; ?>
 
-    <form method="post">
+    <form method="post" autocomplete="off">
         <div class="input-group">
             <i class="fas fa-user input-icon"></i>
-            <input type="text" name="login" class="form-control" placeholder="Loginni kiriting" autocomplete="off" required>
+            <input type="text" name="login" class="form-control" placeholder="Login yoki telefon" autocomplete="username" required>
         </div>
-        <div class="input-group">
+        <div class="input-group" style="margin-bottom:4px">
             <i class="fas fa-lock input-icon"></i>
-            <input type="password" name="parol" class="form-control" placeholder="Parolni kiriting" required>
+            <input type="password" name="parol" class="form-control" placeholder="Parol" autocomplete="current-password" required>
         </div>
-        <button type="submit" name="kirish" class="btn btn-login">Kirish <i class="fas fa-arrow-right ml-2"></i></button>
+        <button type="submit" name="kirish" class="btn-login">
+            Kirish &nbsp; <i class="fas fa-arrow-right"></i>
+        </button>
     </form>
-    <p style="margin-top:22px; color:#64748b; font-size:14px; text-align:center;">
-        Hisobingiz yo'qmi?
-        <a href="/auth/register.php" style="color:#818cf8; font-weight:700; text-decoration:none;">Ro'yxatdan o'ting</a>
-    </p>
+    <div class="reg-link">
+        Hisob yo'qmi? <a href="/auth/register.php">Ro'yxatdan o'ting</a>
+    </div>
 </div>
 
 </body>

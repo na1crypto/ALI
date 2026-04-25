@@ -187,7 +187,32 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:#F4F7FE;color:#1
 .act-val{margin-left:auto;font-size:12px;font-weight:800;flex-shrink:0}
 
 .empty{text-align:center;padding:22px;color:#A3AED0;font-size:13px}
-@media(max-width:1000px){.stats{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:1fr}.quick{grid-template-columns:1fr 1fr}}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1000px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:1fr}
+  .quick{grid-template-columns:1fr 1fr}
+}
+@media(max-width:640px){
+  body{overflow-y:auto}
+  .navbar{padding:0 14px;height:56px}
+  .live-clock{font-size:16px}
+  .main{padding:12px 14px}
+  .greet{padding:16px 18px;border-radius:14px;margin-bottom:14px}
+  .greet-left h2{font-size:18px}
+  .greet-left p{font-size:12px}
+  .greet-emoji{font-size:36px}
+  .stats{grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+  .scard{padding:12px 14px;border-radius:12px}
+  .s-val{font-size:20px}
+  .quick{grid-template-columns:1fr;gap:10px;margin-bottom:14px}
+  .qcard{padding:14px 16px}
+  .qc-title{font-size:14px}
+  .g3{grid-template-columns:1fr;gap:12px}
+  .card{padding:14px}
+  .chart-wrap{height:70px}
+}
 </style>
 </head>
 <body>

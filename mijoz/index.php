@@ -325,6 +325,106 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 /* SKELETON */
 .skel{background:linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%);background-size:200%;animation:sk 1.2s infinite;border-radius:8px;}
 @keyframes sk{0%{background-position:200%}100%{background-position:-200%}}
+
+/* ══════════════════════════════════════════
+   📱 MOBILE FIRST — telefon uchun (≤640px)
+   ══════════════════════════════════════════ */
+@media(max-width:640px){
+
+  /* NAVBAR: ixchamroq */
+  .navbar{ height:52px; padding:0 10px; }
+  .logo{ font-size:16px; }
+  .user-badge span{ display:none; } /* Faqat avatar */
+  .user-badge{ padding:4px 8px 4px 4px; }
+
+  /* "Buyurtmalarim" matni qisqaroq */
+  button[onclick="openOrders()"]{ padding:5px 8px; font-size:11px; }
+
+  /* KATEGORIYALAR: kichikroq, ammo bosib bo'ladigan */
+  .cats-bar{ padding:6px 8px; gap:5px; }
+  .scat{ padding:8px 12px; font-size:12px; border-radius:16px; }
+  .scat-ic{ font-size:14px; }
+
+  /* MAIN LAYOUT: to'liq balandlik */
+  .layout{ height:calc(100vh - 52px); }
+
+  /* QIDIRUV */
+  .search-wrap{ padding:6px 8px; }
+  .search-box{ height:38px; font-size:14px; }
+
+  /* BANNER: kichik */
+  .banner{ margin:6px 8px 0; padding:7px 10px; font-size:11px; }
+
+  /* TOVAR GRID: 2 ustun, katta kartochkalar */
+  .grid{
+    grid-template-columns: repeat(2, 1fr);
+    gap:8px;
+    padding:8px 8px 90px; /* pastda savat uchun joy */
+  }
+
+  /* TOVAR KARTOCHKA: kattaroq, to'liqroq */
+  .pcard{ min-height:140px; padding:10px; border-radius:14px; border-width:1.5px; }
+  .pname{ font-size:13px; margin-top:14px; }
+  .pprice{ font-size:15px; font-weight:900; }
+  .stock-badge{ font-size:11px; padding:3px 7px; }
+
+  /* SAVAT TUGMA: pastda to'liq kenglik (native app kabi) */
+  .cart-bar{
+    left:0; right:0; bottom:0; width:100%;
+    padding:8px 12px env(safe-area-inset-bottom, 10px);
+    background:linear-gradient(to top, var(--bg) 85%, transparent);
+    border-radius:0;
+  }
+  .cart-bar-btn{
+    border-radius:14px;
+    padding:14px 18px;
+    font-size:14px;
+  }
+  .cb-lbl{ font-size:14px; }
+  .cb-total{ font-size:15px; }
+
+  /* DRAWER: to'liq ekran */
+  .drawer{ width:100%; border-radius:0; }
+  .drawer-head{ padding:16px; }
+  .drawer-head h3{ font-size:18px; }
+  .drawer-items{ padding:10px 12px; }
+
+  /* SAVAT ICHIDAGI TOVAR */
+  .citem{ padding:12px; border-radius:12px; }
+  .citem-name{ font-size:14px; }
+  .qty-btn{ width:36px; height:36px; font-size:20px; }
+  .qty-val{ width:36px; height:36px; font-size:14px; }
+  .citem-sum{ font-size:15px; }
+
+  /* SAVAT FOOTER */
+  .cart-footer{ padding:12px 14px env(safe-area-inset-bottom, 20px); }
+  .cftotal-val{ font-size:26px; }
+
+  /* TELEFON + MANZIL: ustma-ust (stacked) */
+  .contact-row{ grid-template-columns:1fr; gap:8px; }
+  .contact-inp{ font-size:16px; padding:14px; }
+
+  /* MODALS: to'liq ekran pastdan chiqadi */
+  .smodal{ align-items:flex-end; padding:0; }
+  .sbox{ border-radius:24px 24px 0 0; max-width:100%; padding:28px 20px env(safe-area-inset-bottom,24px); }
+
+  /* ORDERS MODAL */
+  .obox{ max-height:90vh; border-radius:24px 24px 0 0; padding:20px 16px env(safe-area-inset-bottom,24px); }
+
+  /* CHECKOUT BTN: kattaroq */
+  .checkout-btn{ height:56px; font-size:16px; border-radius:14px; }
+}
+
+/* ══════════════════════════════════════════
+   📟 TABLET (641px – 1024px)
+   ══════════════════════════════════════════ */
+@media(min-width:641px) and (max-width:1024px){
+  .grid{ grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; padding:10px 12px 24px; }
+  .pcard{ min-height:130px; }
+  .cart-bar{ width:320px; bottom:20px; right:20px; }
+  .drawer{ width:420px; }
+  .contact-row{ grid-template-columns:1fr 1fr; }
+}
 </style>
 </head>
 <body>
