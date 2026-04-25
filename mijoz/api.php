@@ -15,6 +15,8 @@ $action = $_GET['action'] ?? '';
 // ── Bir martalik migration (ustunlar yo'q bo'lsa qo'shadi) ──
 @mysqli_query($conn, "ALTER TABLE products ADD COLUMN IF NOT EXISTS image MEDIUMTEXT DEFAULT NULL");
 @mysqli_query($conn, "ALTER TABLE products ADD COLUMN IF NOT EXISTS min_qty INT NOT NULL DEFAULT 1");
+@mysqli_query($conn, "ALTER TABLE sales ADD COLUMN IF NOT EXISTS status VARCHAR(30) DEFAULT 'tolangan'");
+@mysqli_query($conn, "ALTER TABLE sales ADD COLUMN IF NOT EXISTS source VARCHAR(20) DEFAULT 'pos'");
 
 // ── Mahsulotlarni qidirish / barcha mahsulotlar ──
 if ($action === 'products') {
@@ -160,11 +162,12 @@ if ($action === 'checkout') {
         $note_esc  = mysqli_real_escape_string($conn, $note_text);
         $sale_type = $yetkazish ? 'yetkazish' : 'oddiy';
 
-        $sql_sale = "INSERT INTO sales (id, user_id, customer_id, total_price, payment_method, sale_type, note)
-                     VALUES (NULL, $user_id, NULL, $final, 'online', '$sale_type', '$note_esc')";
+        // source='mijoz', status='yangi' — menejer ko'rishi uchun
+        $sql_sale = "INSERT INTO sales (id, user_id, customer_id, total_price, payment_method, sale_type, note, status, source)
+                     VALUES (NULL, $user_id, NULL, $final, 'online', '$sale_type', '$note_esc', 'yangi', 'mijoz')";
         if (!mysqli_query($conn, $sql_sale)) {
-            $sql_sale = "INSERT INTO sales (id, user_id, total_price, payment_method, note)
-                         VALUES (NULL, $user_id, $final, 'naqd', '$note_esc')";
+            $sql_sale = "INSERT INTO sales (id, user_id, total_price, payment_method, note, status, source)
+                         VALUES (NULL, $user_id, $final, 'online', '$note_esc', 'yangi', 'mijoz')";
             if (!mysqli_query($conn, $sql_sale)) {
                 throw new Exception("Buyurtma yozilmadi: " . mysqli_error($conn));
             }
