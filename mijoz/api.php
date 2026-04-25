@@ -92,7 +92,8 @@ if ($action === 'add_cart') {
             'qty'     => $qty,
         ];
     }
-    $cart_total = array_sum(array_map(fn($i)=>$i['price']*$i['qty'], $cart));
+    $cart_total = 0;
+    foreach ($cart as $_ci) $cart_total += ($_ci['price']??0) * ($_ci['qty']??0);
     echo json_encode([
         'status'     => 'ok',
         'cart_count' => array_sum(array_column($cart,'qty')),

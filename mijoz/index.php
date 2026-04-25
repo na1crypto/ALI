@@ -10,20 +10,31 @@ $site      = $st['store_name'] ?? 'ELEVEN';
 $ism       = $_SESSION['name'] ?? 'Mijoz';
 $cart      = $_SESSION['cart'] ?? [];
 $cartCount = array_sum(array_column($cart,'qty'));
-$cartTotal = array_sum(array_map(fn($i)=>$i['price']*$i['qty'], $cart));
+$cartTotal = 0;
+foreach ($cart as $ci) $cartTotal += ($ci['price'] ?? 0) * ($ci['qty'] ?? 0);
 
-$cats_res  = mysqli_query($conn,"SELECT id, name FROM categories ORDER BY name ASC");
+// ── Migration: ustunlar yo'q bo'lsa qo'shish
+@mysqli_query($conn,"ALTER TABLE products ADD COLUMN IF NOT EXISTS min_qty INT NOT NULL DEFAULT 1");
+@mysqli_query($conn,"ALTER TABLE products ADD COLUMN IF NOT EXISTS unit VARCHAR(20) DEFAULT 'dona'");
+@mysqli_query($conn,"ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20) DEFAULT NULL");
+
+$cats_res   = mysqli_query($conn,"SELECT id, name FROM categories ORDER BY name ASC");
 $categories = [];
-while ($c = mysqli_fetch_assoc($cats_res)) $categories[] = $c;
+if ($cats_res) while ($c = mysqli_fetch_assoc($cats_res)) $categories[] = $c;
 
-// Mahsulotlar (optom narxda)
-$prods_res = mysqli_query($conn,"SELECT p.id, p.name, p.price, p.optom_price, p.quantity, p.unit,
-    IFNULL(p.min_qty,1) AS min_qty, p.category_id,
-    IFNULL(c.name,'') AS kategoriya
-    FROM products p LEFT JOIN categories c ON p.category_id=c.id
-    WHERE p.quantity>0 ORDER BY p.name ASC");
+// Mahsulotlar (optom narxda) — min_qty fallback
+$prods_res = mysqli_query($conn,
+    "SELECT p.id, p.name, p.price, p.optom_price, p.quantity,
+            IFNULL(p.unit,'dona') AS unit,
+            IFNULL(p.min_qty,1)  AS min_qty,
+            p.category_id,
+            IFNULL(c.name,'')    AS kategoriya
+     FROM products p
+     LEFT JOIN categories c ON p.category_id = c.id
+     WHERE p.quantity > 0
+     ORDER BY p.name ASC");
 $products = [];
-while ($p = mysqli_fetch_assoc($prods_res)) $products[] = $p;
+if ($prods_res) while ($p = mysqli_fetch_assoc($prods_res)) $products[] = $p;
 ?>
 <!DOCTYPE html>
 <html lang="uz">
