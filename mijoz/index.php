@@ -448,9 +448,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 
   <!-- TOP CATEGORIES BAR -->
   <div class="cats-bar">
-    <button class="scat active" onclick="filterCat('',this)">Barcha</button>
+    <button class="scat active" onclick="filterCat(0,this)">Barcha</button>
     <?php foreach($categories as $c): ?>
-    <button class="scat" onclick="filterCat(<?= json_encode($c['name']) ?>,this)"><?= htmlspecialchars($c['name']) ?></button>
+    <button class="scat" onclick="filterCat(<?= (int)$c['id'] ?>,this)"><?= htmlspecialchars($c['name']) ?></button>
     <?php endforeach; ?>
   </div>
 
@@ -487,7 +487,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
       <div class="pcard"
            data-id="<?= $p['id'] ?>"
            data-name="<?= htmlspecialchars(mb_strtolower($p['name'])) ?>"
-           data-cat="<?= htmlspecialchars($p['kategoriya']) ?>"
+           data-cat="<?= (int)$p['category_id'] ?>"
            data-price="<?= $dispPrice ?>"
            data-minq="<?= $minQ ?>"
            data-unit="<?= htmlspecialchars($unit) ?>"
@@ -589,7 +589,7 @@ $cbSum   = $cartCount ? number_format($cartTotal,0,'.',' ').' UZS' : '';
 <script>
 const FMT = n => Number(n).toLocaleString('uz-UZ');
 let cart = {};   // {id: {id,name,price,minQ,unit,stock,qty}}
-let activeCat = '';
+let activeCat = 0;  // 0 = barchasi, else category_id (int)
 
 // ── Cart: server sessiondan o'qish
 <?php if($cartCount): ?>
@@ -606,9 +606,9 @@ cart[<?= $pid ?>] = {
 <?php endforeach; ?>
 <?php endif; ?>
 
-// ── Kategoriya filtri
-function filterCat(catName, btn) {
-  activeCat = catName;
+// ── Kategoriya filtri (ID bilan — sotuvchi kabi)
+function filterCat(catId, btn) {
+  activeCat = parseInt(catId) || 0;
   document.querySelectorAll('.scat').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   doFilter();
@@ -617,10 +617,10 @@ function filterCat(catName, btn) {
 function doFilter() {
   const q = document.getElementById('searchInp').value.toLowerCase().trim();
   document.querySelectorAll('.pcard').forEach(card => {
-    const nm  = card.dataset.name || '';
-    const cat = (card.dataset.cat  || '').trim();
-    const matchQ   = !q   || nm.includes(q);
-    const matchCat = !activeCat || cat === activeCat.trim();
+    const nm     = card.dataset.name || '';
+    const catId  = parseInt(card.dataset.cat) || 0;
+    const matchQ   = !q         || nm.includes(q);
+    const matchCat = !activeCat || catId === activeCat;
     card.style.display = (matchQ && matchCat) ? '' : 'none';
   });
 }
