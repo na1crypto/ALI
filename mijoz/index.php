@@ -105,12 +105,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 }
 .cats-bar::-webkit-scrollbar{display:none;}
 .scat{
-  display:flex;align-items:center;gap:6px;
   padding:7px 14px;border-radius:20px;cursor:pointer;border:none;
   background:#f1f5f9;transition:.15s;white-space:nowrap;flex-shrink:0;
   font-size:12px;font-weight:700;color:var(--muted);
 }
-.scat-ic{font-size:16px;}
 .scat.active{background:linear-gradient(135deg,var(--primary),var(--primary-d));color:#fff;box-shadow:0 3px 8px rgba(79,70,229,.3);}
 .scat:active{transform:scale(.95);}
 
@@ -142,85 +140,43 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 .grid{
   flex:1;overflow-y:auto;overflow-x:hidden;
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
-  gap:10px;padding:10px 10px 20px;
+  grid-template-columns:repeat(auto-fill,minmax(130px,1fr));
+  gap:8px;padding:8px 10px 20px;
   align-content:start;
 }
 .grid::-webkit-scrollbar{width:3px;}
 .grid::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:4px;}
 
-/* PRODUCT CARD — compact, chiroyli */
+/* PRODUCT CARD — eski chiroyli dizayn */
 .pcard{
   background:#fff;border-radius:14px;
-  border:1.5px solid var(--border);
-  padding:0;
+  border:2px solid var(--border);
+  padding:10px 10px 10px;
   cursor:pointer;position:relative;
   transition:.15s;
   display:flex;flex-direction:column;
-  overflow:hidden;
-  box-shadow:0 2px 8px rgba(0,0,0,.06);
+  justify-content:space-between;
+  min-height:110px;
+  box-shadow:0 2px 6px rgba(0,0,0,.04);
 }
-.pcard:active{transform:scale(.96);box-shadow:0 1px 4px rgba(0,0,0,.1);}
-.pcard.in-cart{border-color:var(--primary);box-shadow:0 0 0 2px rgba(79,70,229,.15);}
-
-/* Rangli yuqori chiziq (kategoriyaga qarab) */
-.pcard-top{
-  height:5px;
-  background:linear-gradient(90deg,var(--primary),#818cf8);
-  flex-shrink:0;
-}
-
-.pcard-body{
-  padding:11px 12px 12px;
-  display:flex;flex-direction:column;
-  flex:1;
-}
-
-/* Miqdor badge + qo'shish tugmasi bir qatorda */
-.pcard-row1{
-  display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:8px;
-}
+.pcard:active{transform:scale(.95);background:#f8fafc;}
+.pcard.in-cart{border-color:var(--primary);background:#fafafe;}
 .stock-badge{
-  font-size:11px;font-weight:700;
+  position:absolute;top:8px;right:8px;
+  font-size:10px;font-weight:700;
   background:#f1f5f9;color:var(--muted);
-  padding:3px 8px;border-radius:20px;
-  line-height:1;
+  padding:2px 7px;border-radius:20px;
 }
 .stock-badge.low{background:#fff7ed;color:#f59e0b;}
-.stock-badge.empty{background:#fee2e2;color:var(--red);}
-
-/* + tugmasi */
-.add-btn{
-  width:28px;height:28px;border-radius:50%;
-  background:var(--primary);color:#fff;
-  border:none;font-size:18px;font-weight:400;
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;flex-shrink:0;line-height:1;
-  box-shadow:0 2px 6px rgba(79,70,229,.35);
-  transition:.15s;
-}
-.add-btn:active{transform:scale(.88);background:var(--primary-d);}
-.pcard.in-cart .add-btn{background:var(--green);}
-
 .pname{
   font-weight:700;font-size:13px;color:var(--dark);
-  line-height:1.35;
+  line-height:1.3;margin-top:16px;
   overflow:hidden;display:-webkit-box;
   -webkit-line-clamp:2;-webkit-box-orient:vertical;
-  margin-bottom:8px;flex:1;
 }
-.pcard-price-row{
-  display:flex;align-items:baseline;justify-content:space-between;
-  margin-top:auto;
-}
-.pprice{font-size:15px;font-weight:900;color:var(--primary);}
-.punit{font-size:11px;color:var(--muted);font-weight:600;}
-.pminq{
-  font-size:10px;color:#f59e0b;font-weight:700;
-  background:#fff7ed;padding:2px 7px;border-radius:10px;
-  margin-top:5px;display:inline-block;
-}
+.pprice{font-size:15px;font-weight:900;color:var(--primary);margin-top:6px;}
+.punit{font-size:10px;color:var(--muted);font-weight:600;}
+.pminq{font-size:10px;color:#f59e0b;font-weight:700;margin-top:3px;}
 
 /* FLOATING CART BAR — o'ng pastda */
 .cart-bar{
@@ -385,7 +341,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
   /* KATEGORIYALAR: kichikroq, ammo bosib bo'ladigan */
   .cats-bar{ padding:6px 8px; gap:5px; }
   .scat{ padding:8px 12px; font-size:12px; border-radius:16px; }
-  .scat-ic{ font-size:14px; }
 
   /* MAIN LAYOUT: to'liq balandlik */
   .layout{ height:calc(100vh - 52px); }
@@ -405,11 +360,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
   }
 
   /* TOVAR KARTOCHKA: kompakt, qulay */
-  .pcard{ border-radius:14px; }
-  .pcard-body{ padding:10px 11px 11px; }
+  .pcard{ border-radius:14px; min-height:100px; }
   .pname{ font-size:13px; }
   .pprice{ font-size:14px; }
-  .add-btn{ width:30px; height:30px; font-size:20px; }
 
   /* SAVAT TUGMA: pastda to'liq kenglik (native app kabi) */
   .cart-bar{
@@ -495,17 +448,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 
   <!-- TOP CATEGORIES BAR -->
   <div class="cats-bar">
-    <?php
-    $icons = ['🏠','🥤','🍫','🧴','🧹','📦','🍕','🥛','🧃','🍬','🧊','🍞','🌿','🐟','🥩','🍳','🧺','💊','🏮','🎁'];
-    $ii = 0;
-    ?>
-    <button class="scat active" onclick="filterCat('',this)">
-      <span class="scat-ic">🏠</span>Barcha
-    </button>
-    <?php foreach($categories as $c): $ico=$icons[$ii%count($icons)];$ii++; ?>
-    <button class="scat" onclick="filterCat(<?= json_encode($c['name']) ?>,this)">
-      <span class="scat-ic"><?= $ico ?></span><?= htmlspecialchars($c['name']) ?>
-    </button>
+    <button class="scat active" onclick="filterCat('',this)">Barcha</button>
+    <?php foreach($categories as $c): ?>
+    <button class="scat" onclick="filterCat(<?= json_encode($c['name']) ?>,this)"><?= htmlspecialchars($c['name']) ?></button>
     <?php endforeach; ?>
   </div>
 
@@ -546,22 +491,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
            data-price="<?= $dispPrice ?>"
            data-minq="<?= $minQ ?>"
            data-unit="<?= htmlspecialchars($unit) ?>"
-           data-stock="<?= $qty ?>">
-        <!-- Rangli chiziq -->
-        <div class="pcard-top" style="background:linear-gradient(90deg,<?= $clr ?>,<?= $clr ?>aa)"></div>
-        <div class="pcard-body">
-          <div class="pcard-row1">
-            <span class="stock-badge <?= $qty<=0?'empty':($lowStock?'low':'') ?>">
-              <?= $qty <= 0 ? 'Tugagan' : $qty.' '.$unit ?>
-            </span>
-            <button class="add-btn" onclick="addToCart(this.closest('.pcard'))">+</button>
-          </div>
-          <div class="pname"><?= htmlspecialchars($p['name']) ?></div>
-          <div class="pcard-price-row">
-            <div class="pprice" style="color:<?= $clr ?>"><?= number_format($dispPrice,0,'.',' ') ?> <span style="font-size:11px;font-weight:700">UZS</span></div>
-            <?php if($minQ>1): ?><div class="pminq">min <?= $minQ ?></div><?php endif; ?>
-          </div>
-        </div>
+           data-stock="<?= $qty ?>"
+           onclick="addToCart(this)">
+        <span class="stock-badge <?= $qty<=0?'empty':($lowStock?'low':'') ?>">
+          <?= $qty <= 0 ? 'Tugagan' : $qty.' '.$unit ?>
+        </span>
+        <div class="pname"><?= htmlspecialchars($p['name']) ?></div>
+        <div class="pprice"><?= number_format($dispPrice,0,'.',' ') ?> <span style="font-size:11px;font-weight:700">UZS</span></div>
+        <?php if($minQ>1): ?><div class="pminq">min <?= $minQ ?></div><?php endif; ?>
       </div>
       <?php endforeach; ?>
     </div>
@@ -681,9 +618,9 @@ function doFilter() {
   const q = document.getElementById('searchInp').value.toLowerCase().trim();
   document.querySelectorAll('.pcard').forEach(card => {
     const nm  = card.dataset.name || '';
-    const cat = card.dataset.cat  || '';
+    const cat = (card.dataset.cat  || '').trim();
     const matchQ   = !q   || nm.includes(q);
-    const matchCat = !activeCat || cat === activeCat;
+    const matchCat = !activeCat || cat === activeCat.trim();
     card.style.display = (matchQ && matchCat) ? '' : 'none';
   });
 }
@@ -698,7 +635,6 @@ function addToCart(card) {
   const unit  = card.dataset.unit || 'dona';
   const stock = parseInt(card.dataset.stock) || 0;
   const name  = card.querySelector('.pname').textContent.trim();
-  const btn   = card.querySelector('.add-btn');
 
   if (stock <= 0) return;
 
@@ -710,8 +646,6 @@ function addToCart(card) {
     cart[id] = {id,name,price,minQ,unit,stock,qty:minQ};
   }
   flashCard(card,'green');
-  // + tugmasiga animatsiya
-  if(btn){ btn.textContent='✓'; setTimeout(()=>btn.textContent='+',800); }
   syncCart();
 }
 
