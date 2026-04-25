@@ -18,6 +18,7 @@ if ($action === 'products') {
     $where = $q ? "AND (p.name LIKE '%$q%' OR p.barcode='$q')" : "";
     $sql = "SELECT p.id, p.name, p.price, p.optom_price, p.quantity, p.barcode,
                    IFNULL(p.min_qty, 1) AS min_qty, IFNULL(p.unit,'dona') AS unit,
+                   IFNULL(p.image,'') AS image,
                    IFNULL(k.name,'') AS kategoriya
             FROM products p
             LEFT JOIN categories k ON p.category_id = k.id
@@ -37,6 +38,7 @@ if ($action === 'products') {
             'barcode'     => $r['barcode'],
             'min_qty'     => $min,
             'unit'        => $r['unit'],
+            'image'       => $r['image'],
             'kategoriya'  => $r['kategoriya'],
         ];
     }
@@ -82,6 +84,7 @@ if ($action === 'add_cart') {
             'stock'   => (int)$row['quantity'],
             'min_qty' => $min_qty,
             'unit'    => $row['unit'] ?: 'dona',
+            'image'   => $row['image'] ?? '',
             'qty'     => $qty,
         ];
     }

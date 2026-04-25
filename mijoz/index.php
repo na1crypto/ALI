@@ -98,31 +98,41 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 /* ── CARD ── */
 .p-card{
   background:var(--card);border-radius:var(--radius);
-  padding:14px 12px;border:1px solid var(--border);
-  display:flex;flex-direction:column;gap:8px;
+  border:1px solid var(--border);
+  display:flex;flex-direction:column;
   transition:.18s;position:relative;overflow:hidden;
+  box-shadow:0 1px 4px rgba(0,0,0,.05);
 }
 .p-card:active{transform:scale(.97);}
-.p-icon{
-  font-size:32px;text-align:center;
-  background:#f8fafc;border-radius:10px;padding:10px;
-  margin-bottom:2px;
+.p-img-wrap{
+  width:100%;aspect-ratio:1/1;overflow:hidden;
+  background:linear-gradient(135deg,#f1f5f9,#e2e8f0);
+  position:relative;flex-shrink:0;
 }
+.p-img-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
+.p-img-placeholder{
+  width:100%;height:100%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:42px;font-weight:900;color:#fff;
+  background:var(--grad, linear-gradient(135deg,#6366f1,#4f46e5));
+}
+.p-body{padding:10px 10px 12px;display:flex;flex-direction:column;gap:5px;flex:1;}
 .p-name{font-size:13px;font-weight:700;color:var(--text);line-height:1.3;}
-.p-kat{font-size:11px;color:var(--muted);margin-top:-4px;}
-.p-minqty{font-size:11px;color:#f59e0b;font-weight:700;margin-top:2px;}
-.p-price-block{margin-top:2px;}
-.p-optom{font-size:16px;font-weight:800;color:var(--primary);}
+.p-kat{font-size:10px;color:var(--muted);background:#f1f5f9;padding:2px 7px;border-radius:999px;width:fit-content;}
+.p-minqty{font-size:10px;color:#f59e0b;font-weight:700;background:#fffbeb;padding:2px 6px;border-radius:6px;width:fit-content;}
+.p-price-block{margin-top:auto;padding-top:4px;}
+.p-optom{font-size:15px;font-weight:800;color:var(--primary);}
 .p-retail{font-size:11px;color:var(--muted);text-decoration:line-through;}
-.p-stock{font-size:11px;color:var(--green);font-weight:600;}
+.p-stock{font-size:10px;color:var(--green);font-weight:600;}
 .p-stock.low{color:#f59e0b;}
 .add-btn{
   background:var(--primary);color:#fff;border:none;
-  border-radius:10px;padding:9px;font-size:13px;font-weight:700;
+  border-radius:0 0 var(--radius) var(--radius);
+  padding:10px;font-size:13px;font-weight:700;
   cursor:pointer;width:100%;transition:.18s;
   display:flex;align-items:center;justify-content:center;gap:6px;
 }
-.add-btn:active{background:var(--primary-d);transform:scale(.96);}
+.add-btn:active{background:var(--primary-d);}
 .add-btn.added{background:var(--green);}
 
 /* ── CART DRAWER ── */
@@ -141,27 +151,54 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 .close-btn{background:#f1f5f9;border:none;border-radius:10px;width:34px;height:34px;font-size:18px;cursor:pointer;color:var(--muted);}
 .drawer-body{overflow-y:auto;flex:1;padding:16px 20px;}
 .cart-item{
-  display:flex;align-items:center;gap:12px;
-  padding:12px 0;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+  padding:10px 0;border-bottom:1px dashed #e2e8f0;
 }
 .cart-item:last-child{border-bottom:none;}
-.ci-name{flex:1;font-size:14px;font-weight:600;}
-.ci-price{font-size:12px;color:var(--muted);}
-.qty-ctrl{display:flex;align-items:center;gap:6px;}
-.qty-btn{
-  width:30px;height:30px;border:1px solid var(--border);
-  border-radius:8px;background:#f8fafc;
-  font-size:18px;cursor:pointer;font-weight:700;
-  display:flex;align-items:center;justify-content:center;color:var(--text);
+.ci-thumb{
+  width:48px;height:48px;border-radius:10px;overflow:hidden;flex-shrink:0;
+  background:linear-gradient(135deg,#ede9fe,#dbeafe);
+  display:flex;align-items:center;justify-content:center;font-size:20px;
 }
-.qty-num{font-size:15px;font-weight:700;min-width:24px;text-align:center;}
-.del-btn{background:#fee2e2;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:14px;color:var(--red);}
+.ci-thumb img{width:100%;height:100%;object-fit:cover;}
+.ci-info{flex:1;min-width:0;}
+.ci-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ci-unit-price{font-size:11px;color:var(--muted);}
+.ci-line-total{font-size:13px;font-weight:800;color:var(--primary);white-space:nowrap;}
+.qty-ctrl{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.qty-btn{
+  width:28px;height:28px;border:1.5px solid var(--border);
+  border-radius:7px;background:#f8fafc;
+  font-size:16px;cursor:pointer;font-weight:700;
+  display:flex;align-items:center;justify-content:center;color:var(--text);
+  transition:.15s;
+}
+.qty-btn:active{background:#e2e8f0;}
+.qty-num{font-size:14px;font-weight:800;min-width:22px;text-align:center;}
+.del-btn{background:#fee2e2;border:none;border-radius:7px;width:28px;height:28px;cursor:pointer;font-size:13px;color:var(--red);flex-shrink:0;}
 .empty-cart{text-align:center;padding:40px 20px;color:var(--muted);}
 .empty-cart .ic{font-size:48px;margin-bottom:12px;}
 
+/* ── CART RECEIPT HEADER ── */
+.cart-summary-head{
+  background:linear-gradient(135deg,#f8faff,#f0f4ff);
+  border-radius:12px;padding:12px 14px;margin-bottom:12px;
+  border:1px solid #e0e7ff;
+}
+.cart-summary-head .cs-row{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:3px;}
+.cart-summary-head .cs-row b{color:var(--text);}
+.cart-count-badge{
+  background:var(--primary);color:#fff;border-radius:999px;
+  font-size:11px;font-weight:800;padding:2px 8px;
+}
+
 /* ── CHECKOUT PANEL ── */
-.checkout-panel{padding:16px 20px 24px;border-top:1px solid var(--border);}
-.total-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.checkout-panel{padding:14px 20px 24px;border-top:2px dashed #e2e8f0;}
+.receipt-line{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:4px;}
+.receipt-line.total{
+  border-top:2px solid var(--text);margin-top:8px;padding-top:8px;
+  font-size:18px;font-weight:900;color:var(--text);
+}
 .total-label{font-size:14px;color:var(--muted);font-weight:600;}
 .total-sum{font-size:22px;font-weight:900;color:var(--text);}
 
@@ -257,10 +294,13 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
   <!-- JS to'ldiradi -->
   <?php for($i=0;$i<8;$i++): ?>
   <div class="p-card">
-    <div class="skel" style="height:60px;"></div>
-    <div class="skel" style="height:14px;width:80%;"></div>
-    <div class="skel" style="height:12px;width:50%;"></div>
-    <div class="skel" style="height:36px;"></div>
+    <div class="skel" style="aspect-ratio:1/1;width:100%;"></div>
+    <div class="p-body" style="gap:6px;">
+      <div class="skel" style="height:13px;width:85%;border-radius:6px;"></div>
+      <div class="skel" style="height:11px;width:50%;border-radius:6px;"></div>
+      <div class="skel" style="height:16px;width:60%;border-radius:6px;margin-top:4px;"></div>
+    </div>
+    <div class="skel" style="height:38px;border-radius:0 0 14px 14px;"></div>
   </div>
   <?php endfor; ?>
 </div>
@@ -279,13 +319,12 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     <div class="empty-cart"><div class="ic">🛒</div><p>Savat bo'sh</p></div>
   </div>
   <div class="checkout-panel" id="checkoutPanel" style="display:none;">
-    <div class="total-row">
-      <span class="total-label">Jami:</span>
-      <span class="total-sum" id="totalSum">0 UZS</span>
-    </div>
+    <div class="receipt-line"><span>Mahsulotlar narxi</span><span id="subtotalSum">—</span></div>
+    <div class="receipt-line"><span>Yetkazish</span><span id="deliveryCost">Bepul</span></div>
+    <div class="receipt-line total"><span>JAMI</span><span id="totalSum">0 UZS</span></div>
 
     <!-- YETKAZISH (1.5M+ bo'lsa ko'rinadi) -->
-    <div class="delivery-box" id="deliveryBox">
+    <div class="delivery-box" id="deliveryBox" style="margin-top:10px;">
       <div class="delivery-toggle" onclick="toggleDelivery()">
         <input type="checkbox" id="deliveryCheck">
         <span>🚚 Yetkazish xizmati</span>
@@ -327,6 +366,20 @@ async function loadProducts(q='') {
   renderGrid(data);
 }
 
+// Mahsulot nomidan rang generatsiya
+const GRADIENTS = [
+  'linear-gradient(135deg,#6366f1,#4f46e5)',
+  'linear-gradient(135deg,#10b981,#059669)',
+  'linear-gradient(135deg,#f59e0b,#d97706)',
+  'linear-gradient(135deg,#ef4444,#dc2626)',
+  'linear-gradient(135deg,#8b5cf6,#7c3aed)',
+  'linear-gradient(135deg,#06b6d4,#0891b2)',
+  'linear-gradient(135deg,#f97316,#ea580c)',
+  'linear-gradient(135deg,#ec4899,#db2777)',
+];
+function getGrad(id) { return GRADIENTS[id % GRADIENTS.length]; }
+function firstLetter(name) { return (name||'?')[0].toUpperCase(); }
+
 function renderGrid(products) {
   const grid = document.getElementById('grid');
   if (!products.length) {
@@ -336,26 +389,29 @@ function renderGrid(products) {
   grid.innerHTML = products.map(p => {
     const showOptom = p.optom_price > 0;
     const displayPrice = showOptom ? p.optom_price : p.price;
-    const stockClass = p.quantity <= 5 ? 'low' : '';
-    const icons = ['📦','🛍️','🏷️','📋','🎁','💼','🧴','🥤','🍫','🧹'];
-    const icon = icons[p.id % icons.length];
-    const minQ  = p.min_qty || 1;
-    const unit  = p.unit || 'dona';
-    const minBadge = minQ > 1
-      ? `<div class="p-minqty">📦 Min: ${minQ} ${unit}</div>`
-      : '';
+    const stockClass   = p.quantity <= 5 ? 'low' : '';
+    const minQ = p.min_qty || 1;
+    const unit = p.unit || 'dona';
+    const grad = getGrad(p.id);
+
+    const imgHtml = p.image
+      ? `<img src="${p.image}" alt="${escHtml(p.name)}" loading="lazy">`
+      : `<div class="p-img-placeholder" style="--grad:${grad}">${firstLetter(p.name)}</div>`;
+
     return `
     <div class="p-card" id="card_${p.id}">
-      <div class="p-icon">${icon}</div>
-      <div class="p-name">${escHtml(p.name)}</div>
-      ${p.kategoriya?`<div class="p-kat">${escHtml(p.kategoriya)}</div>`:''}
-      ${minBadge}
-      <div class="p-price-block">
-        <div class="p-optom">${FMT(displayPrice)}</div>
-        ${showOptom && p.price !== p.optom_price ? `<div class="p-retail">${FMT(p.price)}</div>`:''}
+      <div class="p-img-wrap">${imgHtml}</div>
+      <div class="p-body">
+        <div class="p-name">${escHtml(p.name)}</div>
+        ${p.kategoriya ? `<div class="p-kat">${escHtml(p.kategoriya)}</div>` : ''}
+        ${minQ > 1 ? `<div class="p-minqty">📦 Min: ${minQ} ${unit}</div>` : ''}
+        <div class="p-price-block">
+          <div class="p-optom">${FMT(displayPrice)}</div>
+          ${showOptom && p.price !== p.optom_price ? `<div class="p-retail">${FMT(p.price)}</div>` : ''}
+        </div>
+        <div class="p-stock ${stockClass}">✦ ${p.quantity} ${unit} bor</div>
       </div>
-      <div class="p-stock ${stockClass}">Qoldi: ${p.quantity} ${unit}</div>
-      <button class="add-btn" id="btn_${p.id}" onclick="addCart(${p.id},${displayPrice},${minQ},'${unit}')">
+      <button class="add-btn" id="btn_${p.id}" onclick="addCart(${p.id},${displayPrice},${minQ},'${escHtml(unit)}')">
         ＋ Savatga
       </button>
     </div>`;
@@ -425,30 +481,48 @@ async function loadCart() {
     return;
   }
 
-  body.innerHTML = d.items.map(item => {
+  // Savat sarlavhasi: necha xil mahsulot, jami dona
+  const totalItems = d.items.reduce((s,i)=>s+i.qty,0);
+  const uniqueItems = d.items.length;
+  const summaryHead = `
+    <div class="cart-summary-head">
+      <div class="cs-row"><span>Mahsulotlar</span><span><b class="cart-count-badge">${uniqueItems} xil</b></span></div>
+      <div class="cs-row"><span>Jami dona</span><b>${totalItems} ta</b></div>
+    </div>`;
+
+  body.innerHTML = summaryHead + d.items.map(item => {
     const minQ = item.min_qty || 1;
     const unit = item.unit   || 'dona';
     const prevQty = Math.max(minQ, item.qty - minQ);
     const nextQty = item.qty + minQ;
+    const grad = getGrad(item.id);
+    const thumbHtml = item.image
+      ? `<img src="${item.image}" alt="">`
+      : `<span style="font-size:18px;font-weight:900;color:#fff;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:${grad};border-radius:10px;">${firstLetter(item.name)}</span>`;
     return `
     <div class="cart-item" id="ci_${item.id}">
-      <div style="flex:1">
+      <div class="ci-thumb">${thumbHtml}</div>
+      <div class="ci-info">
         <div class="ci-name">${escHtml(item.name)}</div>
-        ${minQ > 1 ? `<div style="font-size:11px;color:#f59e0b;font-weight:600;">📦 Min: ${minQ} ${unit}</div>` : ''}
-        <div class="ci-price">${FMT(item.price)} × ${item.qty} ${unit} = <b>${FMT(item.price*item.qty)}</b></div>
+        <div class="ci-unit-price">${FMT(item.price)} / ${unit}</div>
       </div>
-      <div class="qty-ctrl">
-        <button class="qty-btn" onclick="changeQty(${item.id},${prevQty},${minQ})"${item.qty <= minQ ? ' style="opacity:.35"' : ''}>−</button>
-        <span class="qty-num">${item.qty}</span>
-        <button class="qty-btn" onclick="changeQty(${item.id},${nextQty},${minQ},${item.stock||99})">＋</button>
-        <button class="del-btn" onclick="removeItem(${item.id})">🗑</button>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+        <div class="ci-line-total">${FMT(item.price*item.qty)}</div>
+        <div class="qty-ctrl">
+          <button class="qty-btn" onclick="changeQty(${item.id},${prevQty},${minQ})"${item.qty<=minQ?' style="opacity:.35"':''}>−</button>
+          <span class="qty-num">${item.qty}</span>
+          <button class="qty-btn" onclick="changeQty(${item.id},${nextQty},${minQ},${item.stock||99})">＋</button>
+          <button class="del-btn" onclick="removeItem(${item.id})">🗑</button>
+        </div>
       </div>
     </div>`;
   }).join('');
 
   panel.style.display = 'block';
   const total = d.total;
-  document.getElementById('totalSum').textContent = FMT(total);
+  document.getElementById('subtotalSum').textContent = FMT(total);
+  document.getElementById('totalSum').textContent    = FMT(total);
+  document.getElementById('deliveryCost').textContent = total >= 1500000 ? '🎁 BEPUL' : '—';
 
   // Yetkazish
   const delivBox = document.getElementById('deliveryBox');

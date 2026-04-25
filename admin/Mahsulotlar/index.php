@@ -39,11 +39,24 @@ if (isset($_POST['saqlash'])) {
         $category_id = (int)$category_id_post;
     }
 
-    // Avval min_qty ustunini qo'shish (bir martalik migration)
-    @mysqli_query($conn, "ALTER TABLE products ADD COLUMN IF NOT EXISTS min_qty INT NOT NULL DEFAULT 1 COMMENT 'Minimal buyurtma miqdori'");
+    // Avval ustunlarni qo'shish (bir martalik migration)
+    @mysqli_query($conn, "ALTER TABLE products ADD COLUMN IF NOT EXISTS min_qty INT NOT NULL DEFAULT 1");
+    @mysqli_query($conn, "ALTER TABLE products ADD COLUMN IF NOT EXISTS image MEDIUMTEXT DEFAULT NULL");
 
-    $sql = "INSERT INTO products (barcode, category_id, name, purchase_price, optom_price, price, quantity, unit, min_qty, expiry_date)
-            VALUES ('$barcode', '$category_id', '$name', '$purchase_price', '$optom_price', '$price', '$quantity', '$unit', '$min_qty', $expiry_date)";
+    // Rasm qayta ishlash (base64 → DB)
+    $image_sql = 'NULL';
+    if (!empty($_FILES['image']['tmp_name']) && $_FILES['image']['error'] === 0) {
+        $allowed = ['image/jpeg','image/png','image/webp','image/gif'];
+        $mime = mime_content_type($_FILES['image']['tmp_name']);
+        if (in_array($mime, $allowed) && $_FILES['image']['size'] < 2097152) { // max 2MB
+            $imgData = file_get_contents($_FILES['image']['tmp_name']);
+            $b64 = 'data:' . $mime . ';base64,' . base64_encode($imgData);
+            $image_sql = "'" . mysqli_real_escape_string($conn, $b64) . "'";
+        }
+    }
+
+    $sql = "INSERT INTO products (barcode, category_id, name, purchase_price, optom_price, price, quantity, unit, min_qty, image, expiry_date)
+            VALUES ('$barcode', '$category_id', '$name', '$purchase_price', '$optom_price', '$price', '$quantity', '$unit', '$min_qty', $image_sql, $expiry_date)";
 
     if (mysqli_query($conn, $sql)) {
         echo "<script>alert('Mahsulot muvaffaqiyatli saqlandi!'); window.location.href='index.php';</script>";
@@ -235,7 +248,7 @@ while($c = mysqli_fetch_assoc($cats_query)) {
                     <button type="button" class="close text-muted" data-dismiss="modal" style="border:none; background:none; font-size:24px;">&times;</button>
                 </div>
                 
-                <form action="" method="POST">
+                <form action="" method="POST" enctype="multipart/form-data">
                     <div class="modal-body">
                         <div class="row">
                             <div class="col-md-6">
@@ -294,6 +307,12 @@ while($c = mysqli_fetch_assoc($cats_query)) {
                             <div class="col-md-4">
                                 <label class="bento-label">Yaroqlilik <span class="text-muted font-weight-normal">(Ixtiyoriy)</span></label>
                                 <input type="date" name="expiry_date" class="bento-input-modal">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="bento-label">📷 Mahsulot rasmi <span class="text-muted font-weight-normal">(Ixtiyoriy, max 2MB)</span></label>
+                                <input type="file" name="image" accept="image/*" class="bento-input-modal" style="padding:8px;"
+                                       onchange="previewImg(this,'prev_new')">
+                                <img id="prev_new" src="" style="display:none;max-height:80px;border-radius:10px;margin-top:8px;object-fit:cover;">
                             </div>
                         </div>
                     </div>
@@ -362,6 +381,15 @@ while($c = mysqli_fetch_assoc($cats_query)) {
             $('input[name="barcode"]').trigger('focus');
         });
     });
+
+    function previewImg(input, previewId) {
+        const prev = document.getElementById(previewId);
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = e => { prev.src = e.target.result; prev.style.display = 'block'; };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
 </script>
 
 </body>

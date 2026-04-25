@@ -29,13 +29,29 @@ if (isset($_POST['yangilash'])) {
     $min_qty = max(1, (int)($_POST['min_qty'] ?? 1));
     $expiry_date = !empty($_POST['expiry_date']) ? "'" . mysqli_real_escape_string($conn, $_POST['expiry_date']) . "'" : "NULL";
 
-    // Avval min_qty ustunini qo'shish (bir martalik migration)
+    // Bir martalik migration
     @mysqli_query($conn, "ALTER TABLE products ADD COLUMN IF NOT EXISTS min_qty INT NOT NULL DEFAULT 1");
+    @mysqli_query($conn, "ALTER TABLE products ADD COLUMN IF NOT EXISTS image MEDIUMTEXT DEFAULT NULL");
+
+    // Rasm qayta ishlash
+    $image_set = '';
+    if (!empty($_FILES['image']['tmp_name']) && $_FILES['image']['error'] === 0) {
+        $allowed = ['image/jpeg','image/png','image/webp','image/gif'];
+        $mime = mime_content_type($_FILES['image']['tmp_name']);
+        if (in_array($mime, $allowed) && $_FILES['image']['size'] < 2097152) {
+            $imgData = file_get_contents($_FILES['image']['tmp_name']);
+            $b64 = 'data:' . $mime . ';base64,' . base64_encode($imgData);
+            $image_set = ", image='" . mysqli_real_escape_string($conn, $b64) . "'";
+        }
+    } elseif (isset($_POST['remove_image']) && $_POST['remove_image'] == '1') {
+        $image_set = ", image=NULL";
+    }
 
     $sql = "UPDATE products SET
             barcode='$barcode', category_id='$category_id', name='$name',
             purchase_price='$purchase_price', optom_price='$optom_price',
-            price='$price', quantity='$quantity', unit='$unit', min_qty='$min_qty', expiry_date=$expiry_date
+            price='$price', quantity='$quantity', unit='$unit', min_qty='$min_qty'
+            $image_set, expiry_date=$expiry_date
             WHERE id=$id";
     
     if(mysqli_query($conn, $sql)){
@@ -74,7 +90,7 @@ if (isset($_POST['yangilash'])) {
                         <i class="fas fa-pen text-primary mr-2"></i> Tahrirlash: <span style="color: #4F46E5;"><?= htmlspecialchars($product['name']) ?></span>
                     </h4>
 
-                    <form method="POST">
+                    <form method="POST" enctype="multipart/form-data">
                         <div class="row">
                             <div class="col-md-6">
                                 <label class="bento-label">Shtrix-kod</label>
@@ -129,6 +145,21 @@ if (isset($_POST['yangilash'])) {
                                 <label class="bento-label">Yaroqlilik muddati</label>
                                 <input type="date" name="expiry_date" class="bento-input" value="<?= $product['expiry_date'] ?>">
                             </div>
+                            <div class="col-md-12">
+                                <label class="bento-label">📷 Mahsulot rasmi</label>
+                                <?php if (!empty($product['image'])): ?>
+                                <div style="margin-bottom:10px;display:flex;align-items:center;gap:12px;">
+                                    <img id="cur_img" src="<?= $product['image'] ?>" style="height:80px;border-radius:10px;object-fit:cover;border:2px solid #e2e8f0;">
+                                    <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#ef4444;cursor:pointer;">
+                                        <input type="checkbox" name="remove_image" value="1" onchange="if(this.checked) document.getElementById('cur_img').style.opacity='.3'; else document.getElementById('cur_img').style.opacity='1';">
+                                        Rasmni o'chirish
+                                    </label>
+                                </div>
+                                <?php endif; ?>
+                                <input type="file" name="image" accept="image/*" class="bento-input" style="padding:8px;"
+                                       onchange="previewImgEdit(this)">
+                                <img id="new_prev" src="" style="display:none;max-height:80px;border-radius:10px;margin-top:8px;object-fit:cover;">
+                            </div>
                         </div>
                         <div class="d-flex justify-content-between mt-3 pt-3 border-top">
                             <a href="index.php" class="btn btn-light px-4 font-weight-bold" style="border-radius: 12px;">Bekor qilish</a>
@@ -139,5 +170,15 @@ if (isset($_POST['yangilash'])) {
             </div>
         </div>
     </div>
+<script>
+function previewImgEdit(input) {
+    const prev = document.getElementById('new_prev');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => { prev.src = e.target.result; prev.style.display = 'block'; };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
 </body>
 </html>
