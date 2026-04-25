@@ -92,7 +92,12 @@ if ($action === 'add_cart') {
             'qty'     => $qty,
         ];
     }
-    echo json_encode(['status'=>'ok','cart_count'=>array_sum(array_column($cart,'qty'))]);
+    $cart_total = array_sum(array_map(fn($i)=>$i['price']*$i['qty'], $cart));
+    echo json_encode([
+        'status'     => 'ok',
+        'cart_count' => array_sum(array_column($cart,'qty')),
+        'cart_total' => $cart_total,
+    ]);
     exit;
 }
 

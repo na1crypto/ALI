@@ -10,6 +10,12 @@ $site     = $st['store_name'] ?? 'ELEVEN';
 $ism      = $_SESSION['name'] ?? 'Mijoz';
 $cart     = $_SESSION['cart'] ?? [];
 $cartCount = array_sum(array_column($cart,'qty'));
+$cartTotal = array_sum(array_map(fn($i)=>$i['price']*$i['qty'], $cart));
+
+// Kategoriyalar
+$cats_res = mysqli_query($conn,"SELECT id, name FROM categories ORDER BY name ASC");
+$categories = [];
+while($c = mysqli_fetch_assoc($cats_res)) $categories[] = $c;
 ?>
 <!DOCTYPE html>
 <html lang="uz">
@@ -87,13 +93,64 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
   border:1px solid #c7d2fe;
 }
 
+/* ── KATEGORIYA TABS ── */
+.cat-tabs{
+  display:flex;gap:8px;overflow-x:auto;
+  padding:0 16px 14px;scrollbar-width:none;
+}
+.cat-tabs::-webkit-scrollbar{display:none;}
+.cat-tab{
+  flex-shrink:0;padding:7px 16px;border-radius:999px;
+  font-size:13px;font-weight:700;cursor:pointer;border:none;
+  background:#fff;color:var(--muted);border:1.5px solid var(--border);
+  transition:.18s;white-space:nowrap;
+}
+.cat-tab.active{
+  background:var(--primary);color:#fff;border-color:var(--primary);
+  box-shadow:0 2px 8px rgba(99,102,241,.3);
+}
+
 /* ── GRID ── */
 .products-grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
-  gap:12px; padding:0 16px 100px;
+  gap:12px; padding:0 16px 130px;
 }
 @media(max-width:360px){.products-grid{grid-template-columns:1fr 1fr;}}
+
+/* ── FLOATING CART BAR ── */
+.cart-bar{
+  position:fixed;bottom:0;left:0;right:0;
+  padding:12px 16px 20px;
+  background:linear-gradient(to top, #fff 80%, rgba(255,255,255,0));
+  z-index:150;
+  transition:opacity .3s;
+}
+.cart-bar-inner{
+  background:linear-gradient(135deg,var(--primary),var(--primary-d));
+  border-radius:18px;
+  padding:14px 18px;
+  display:flex;align-items:center;justify-content:space-between;
+  box-shadow:0 8px 24px rgba(99,102,241,.45);
+  cursor:pointer;
+  transition:.2s;
+}
+.cart-bar-inner:active{transform:scale(.98);}
+.cb-left{display:flex;align-items:center;gap:10px;}
+.cb-badge{
+  background:rgba(255,255,255,.25);
+  border-radius:10px;padding:4px 10px;
+  font-size:13px;font-weight:800;color:#fff;
+}
+.cb-text{font-size:14px;font-weight:700;color:rgba(255,255,255,.9);}
+.cb-total{font-size:17px;font-weight:900;color:#fff;}
+.cb-arrow{font-size:20px;color:rgba(255,255,255,.85);}
+
+/* empty cart bar */
+.cart-bar.empty .cart-bar-inner{
+  background:linear-gradient(135deg,#94a3b8,#64748b);
+  box-shadow:0 4px 12px rgba(0,0,0,.12);
+}
 
 /* ── CARD ── */
 .p-card{
@@ -287,6 +344,14 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
   </div>
 </div>
 
+<!-- KATEGORIYA TABS -->
+<div class="cat-tabs" id="catTabs">
+  <button class="cat-tab active" onclick="filterCat('',this)">🏠 Barchasi</button>
+  <?php foreach($categories as $c): ?>
+  <button class="cat-tab" onclick="filterCat(<?= json_encode($c['name']) ?>,this)"><?= htmlspecialchars($c['name']) ?></button>
+  <?php endforeach; ?>
+</div>
+
 <!-- BANNER -->
 <div class="banner">
   <span style="font-size:20px;">🚚</span>
@@ -309,6 +374,26 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
     <div class="skel" style="height:38px;border-radius:0 0 14px 14px;"></div>
   </div>
   <?php endfor; ?>
+</div>
+
+<!-- FLOATING CART BAR -->
+<?php
+  $cbClass = $cartCount ? '' : ' empty';
+  $cbBadge = $cartCount ?: '0';
+  $cbTotal = $cartCount ? number_format($cartTotal, 0, '.', ' ') . ' UZS' : 'Savat bo\'sh';
+  $cbText  = $cartCount ? ($cartCount . ' ta mahsulot') : 'Hech narsa qo\'shilmagan';
+?>
+<div class="cart-bar<?= $cbClass ?>" id="cartBar" onclick="openDrawer()">
+  <div class="cart-bar-inner">
+    <div class="cb-left">
+      <div class="cb-badge" id="cbBadge">🛒 <?= $cbBadge ?></div>
+      <div class="cb-text" id="cbText"><?= htmlspecialchars($cbText) ?></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="cb-total" id="cbTotal"><?= htmlspecialchars($cbTotal) ?></div>
+      <div class="cb-arrow">›</div>
+    </div>
+  </div>
 </div>
 
 <!-- OVERLAY -->
@@ -361,15 +446,35 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 const FMT = n => Number(n).toLocaleString('uz-UZ') + ' UZS';
 let allProducts = [];
 let debTimer;
+let activeCat = 0; // 0 = barchasi
 
 // ── Mahsulotlarni yuklash ──
-async function loadProducts(q='') {
+async function loadProducts() {
   const fd = new FormData();
-  fd.append('q', q);
   const res = await fetch('/mijoz/api.php?action=products', {method:'POST',body:fd});
   const data = await res.json();
   allProducts = data;
-  renderGrid(data);
+  applyFilter();
+}
+
+// ── Kategoriya filtri ──
+let activeCatName = ''; // '' = barchasi
+
+function filterCat(catName, btn) {
+  activeCatName = catName;
+  document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilter();
+}
+
+function applyFilter() {
+  const q = document.getElementById('searchInp').value.trim().toLowerCase();
+  let filtered = allProducts;
+  if (activeCatName) filtered = filtered.filter(p => p.kategoriya === activeCatName);
+  if (q) filtered = filtered.filter(p =>
+    p.name.toLowerCase().includes(q) || p.barcode === q
+  );
+  renderGrid(filtered);
 }
 
 // Mahsulot nomidan rang generatsiya
@@ -439,7 +544,7 @@ async function addCart(id, price, minQty, unit) {
   if (d.status === 'ok') {
     btn.className = 'add-btn added';
     btn.textContent = '✓ Qo\'shildi';
-    updateBadge(d.cart_count);
+    updateBadge(d.cart_count, d.cart_total);
     setTimeout(() => {
       btn.className = 'add-btn';
       btn.innerHTML = '＋ Savatga';
@@ -453,24 +558,42 @@ async function addCart(id, price, minQty, unit) {
   }
 }
 
-function updateBadge(n) {
+function updateBadge(n, total) {
+  // Header badge
   const b = document.getElementById('cartBadge');
   b.textContent = n;
   b.style.display = n > 0 ? 'flex' : 'none';
-  document.getElementById('cartBtn').style.animation = 'none';
-  setTimeout(()=>document.getElementById('cartBtn').style.animation='',10);
+
+  // Floating cart bar
+  const bar = document.getElementById('cartBar');
+  document.getElementById('cbBadge').textContent = '🛒 ' + (n || '0');
+  if (n > 0) {
+    bar.classList.remove('empty');
+    document.getElementById('cbText').textContent = n + ' ta mahsulot';
+    if (total !== undefined) {
+      document.getElementById('cbTotal').textContent = FMT(total);
+    }
+  } else {
+    bar.classList.add('empty');
+    document.getElementById('cbText').textContent = 'Hech narsa qo\'shilmagan';
+    document.getElementById('cbTotal').textContent = 'Savat bo\'sh';
+  }
 }
 
 // ── Drawer ──
 function openDrawer() {
   document.getElementById('drawer').classList.add('open');
   document.getElementById('overlay').classList.add('open');
+  document.getElementById('cartBar').style.opacity = '0';
+  document.getElementById('cartBar').style.pointerEvents = 'none';
   document.body.style.overflow = 'hidden';
   loadCart();
 }
 function closeDrawer() {
   document.getElementById('drawer').classList.remove('open');
   document.getElementById('overlay').classList.remove('open');
+  document.getElementById('cartBar').style.opacity = '1';
+  document.getElementById('cartBar').style.pointerEvents = '';
   document.body.style.overflow = '';
 }
 
@@ -484,6 +607,7 @@ async function loadCart() {
   if (!d.items || !d.items.length) {
     body.innerHTML = '<div class="empty-cart"><div class="ic">🛒</div><p>Savat bo\'sh</p></div>';
     panel.style.display = 'none';
+    updateBadge(0, 0);
     return;
   }
 
@@ -530,6 +654,10 @@ async function loadCart() {
   document.getElementById('totalSum').textContent    = FMT(total);
   document.getElementById('deliveryCost').textContent = total >= 1500000 ? '🎁 BEPUL' : '—';
 
+  // Floating bar yangilash
+  const totalQty = d.items.reduce((s,i)=>s+i.qty,0);
+  updateBadge(totalQty, total);
+
   // Yetkazish
   const delivBox = document.getElementById('deliveryBox');
   if (total >= 1500000) {
@@ -557,9 +685,6 @@ async function changeQty(id, qty, minQ, max) {
   const fd = new FormData();
   fd.append('id', id); fd.append('qty', qty);
   await fetch('/mijoz/api.php?action=update_qty',{method:'POST',body:fd});
-  const res = await fetch('/mijoz/api.php?action=get_cart');
-  const d = await res.json();
-  updateBadge(d.items ? d.items.reduce((s,i)=>s+i.qty,0) : 0);
   loadCart();
 }
 
@@ -567,9 +692,6 @@ async function removeItem(id) {
   const fd = new FormData();
   fd.append('id', id);
   await fetch('/mijoz/api.php?action=remove_cart',{method:'POST',body:fd});
-  const res = await fetch('/mijoz/api.php?action=get_cart');
-  const d = await res.json();
-  updateBadge(d.items ? d.items.reduce((s,i)=>s+i.qty,0) : 0);
   loadCart();
 }
 
@@ -602,7 +724,7 @@ async function checkout() {
       : `Buyurtma №${d.sale_id}. Jami: ${FMT(d.total)}. O'zingiz olib ketasiz.`;
     document.getElementById('successMsg').textContent = msg;
     document.getElementById('successModal').classList.add('show');
-    updateBadge(0);
+    updateBadge(0, 0);
   } else {
     alert(d.message || 'Xatolik!');
   }
@@ -630,7 +752,7 @@ function showToast(msg, type) {
 // ── Qidiruv ──
 document.getElementById('searchInp').addEventListener('input', function() {
   clearTimeout(debTimer);
-  debTimer = setTimeout(() => loadProducts(this.value.trim()), 350);
+  debTimer = setTimeout(() => applyFilter(), 250);
 });
 
 // ── Boshlang'ich yuklash ──
