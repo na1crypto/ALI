@@ -193,4 +193,33 @@ if ($action === 'checkout') {
     exit;
 }
 
+// ── Savatni to'liq sinxronlash (client → server session)
+if ($action === 'sync_cart') {
+    $data = json_decode($_POST['cart'] ?? '{}', true);
+    if (!is_array($data)) { echo json_encode(['status'=>'ok']); exit; }
+    $newCart = [];
+    foreach ($data as $pid => $item) {
+        $pid = (int)$pid;
+        if ($pid <= 0) continue;
+        $row = mysqli_fetch_assoc(mysqli_query($conn,"SELECT * FROM products WHERE id=$pid AND quantity>0"));
+        if (!$row) continue;
+        $qty   = max(1,(int)($item['qty']??1));
+        $minQ  = max(1,(int)($row['min_qty']??1));
+        $qty   = (int)(round($qty/$minQ)*$minQ);
+        $price = (float)$row['optom_price'] ?: (float)$row['price'];
+        $newCart[$pid] = [
+            'id'      => $pid,
+            'name'    => $row['name'],
+            'price'   => $price,
+            'stock'   => (int)$row['quantity'],
+            'min_qty' => $minQ,
+            'unit'    => $row['unit'] ?: 'dona',
+            'qty'     => min($qty,(int)$row['quantity']),
+        ];
+    }
+    $_SESSION['cart'] = $newCart;
+    echo json_encode(['status'=>'ok']);
+    exit;
+}
+
 echo json_encode(['status'=>'error','message'=>'Noma\'lum so\'rov']);
