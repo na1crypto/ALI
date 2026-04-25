@@ -102,6 +102,22 @@ if(!empty($_GET['sale_type'])) $where .= " AND s.sale_type = '".mysqli_real_esca
 $reyting_res = mysqli_query($conn, "SELECT u.name, COUNT(s.id) as savdo_soni, SUM(s.total_price) as summa FROM sales s LEFT JOIN users u ON s.user_id = u.id WHERE $where GROUP BY s.user_id ORDER BY summa DESC LIMIT 5");
 $top_products_res = mysqli_query($conn, "SELECT p.name, SUM(si.quantity) as jami_miqdor FROM sale_items si JOIN sales s ON si.sale_id = s.id JOIN products p ON si.product_id = p.id WHERE $where GROUP BY p.id ORDER BY jami_miqdor DESC LIMIT 5");
 $history_res = mysqli_query($conn, "SELECT s.*, u.name as seller_name FROM sales s LEFT JOIN users u ON s.user_id = u.id WHERE $where ORDER BY s.sale_date DESC LIMIT 50");
+
+// ── Dastavka tarixi ──
+$dastavka_res = mysqli_query($conn,"
+    SELECT s.id, s.sale_date, s.total_price, s.status, s.note, s.sale_type,
+           u.name AS mijoz_nomi, u.username AS mijoz_login
+    FROM sales s
+    LEFT JOIN users u ON s.user_id = u.id
+    WHERE s.source='mijoz'
+    ORDER BY s.id DESC LIMIT 100
+");
+// Dastavka statistika
+$dav_tmp = mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) AS c, COALESCE(SUM(total_price),0) AS s FROM sales WHERE source='mijoz'"));
+$dav_cnt   = (int)($dav_tmp['c'] ?? 0);
+$dav_summa = (float)($dav_tmp['s'] ?? 0);
+$dav_yangi = mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) AS c FROM sales WHERE source='mijoz' AND status='yangi'"));
+$dav_yangi = (int)($dav_yangi['c'] ?? 0);
 ?>
 <!DOCTYPE html>
 <html lang="uz">
@@ -170,14 +186,30 @@ $history_res = mysqli_query($conn, "SELECT s.*, u.name as seller_name FROM sales
 
     <div class="main-content">
         
-        <div class="d-flex justify-content-between align-items-end mb-4">
+        <div class="d-flex justify-content-between align-items-end mb-3">
             <div>
                 <h1 style="font-size: 26px; font-weight: 800; color: #0F172A; margin: 0;">Savdo Tarixi va Hisobotlar</h1>
-                <p class="text-muted mt-1 mb-0" style="font-size: 14px;">Barcha tranzaksiyalar ro'yxati (6 oydan eskisi o'chiriladi).</p>
+                <p class="text-muted mt-1 mb-0" style="font-size: 14px;">Barcha tranzaksiyalar ro'yxati.</p>
             </div>
-            <button class="btn-search" style="background: #10B981;"><i class="fas fa-download mr-2"></i> Excelga yuklash</button>
         </div>
 
+        <!-- TABLAR -->
+        <div style="display:flex;gap:8px;margin-bottom:20px;">
+            <button onclick="showTab('savdo')" id="tab-savdo"
+                style="padding:10px 22px;border-radius:10px;border:none;font-weight:700;font-size:14px;cursor:pointer;background:#0F172A;color:#fff;">
+                🧾 Savdo Tarixi
+            </button>
+            <button onclick="showTab('dastavka')" id="tab-dastavka"
+                style="padding:10px 22px;border-radius:10px;border:none;font-weight:700;font-size:14px;cursor:pointer;background:#E2E8F0;color:#475569;">
+                🚚 Dastavka Tarixi
+                <?php if($dav_yangi>0): ?>
+                <span style="background:#EF4444;color:#fff;border-radius:999px;padding:2px 7px;font-size:11px;margin-left:4px;"><?= $dav_yangi ?></span>
+                <?php endif; ?>
+            </button>
+        </div>
+
+<!-- ═══ SAVDO TARIXI ═══ -->
+<div id="panel-savdo">
         <form method="GET" class="filter-section">
             <div class="filter-group">
                 <div class="text-muted font-weight-bold mr-2" style="font-size: 14px;">Davr:</div>
@@ -339,6 +371,91 @@ $history_res = mysqli_query($conn, "SELECT s.*, u.name as seller_name FROM sales
         </div>
     </div>
 
+</div><!-- /panel-savdo -->
+
+<!-- ═══ DASTAVKA TARIXI ═══ -->
+<div id="panel-dastavka" style="display:none;">
+    <!-- 3 stat karta -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="report-card">
+                <div class="report-icon" style="background:#FFF7ED;color:#EA580C;">🚚</div>
+                <div><div class="report-title">Jami buyurtmalar</div><div class="report-value"><?= $dav_cnt ?> <span style="font-size:14px;color:#64748B;">ta</span></div></div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="report-card">
+                <div class="report-icon" style="background:#EFF6FF;color:#2563EB;">⏳</div>
+                <div><div class="report-title">Kutilayotgan</div><div class="report-value" style="color:#EF4444;"><?= $dav_yangi ?> <span style="font-size:14px;color:#64748B;">ta</span></div></div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="report-card">
+                <div class="report-icon" style="background:#ECFDF5;color:#059669;">💰</div>
+                <div><div class="report-title">Jami summa</div><div class="report-value"><?= number_format($dav_summa,0,'.',' ') ?> <span style="font-size:14px;color:#64748B;">UZS</span></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="data-table-wrapper">
+        <div class="data-table-header">
+            <h5>🚚 Online Buyurtmalar (Dastavka Tarixi)</h5>
+            <span style="font-size:13px;color:#64748B;font-weight:600;"><?= $dastavka_res ? mysqli_num_rows($dastavka_res) : 0 ?> ta topildi</span>
+        </div>
+        <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#ID / Turi</th>
+                    <th>Mijoz</th>
+                    <th>Telefon / Manzil</th>
+                    <th>Holat</th>
+                    <th>Summa</th>
+                    <th>Sana</th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php if($dastavka_res && mysqli_num_rows($dastavka_res)>0): while($dv=mysqli_fetch_assoc($dastavka_res)):
+                $st = $dv['status'];
+                if($st==='yangi')            { $stlbl='⏳ Kutilmoqda';        $stcl='#FFB547'; $stbg='#FFF4E5'; }
+                elseif($st==='qabul_qilindi'){ $stlbl='📦 Tayyorlanmoqda';   $stcl='#059669'; $stbg='#ECFDF5'; }
+                elseif($st==='rad_etildi')   { $stlbl='❌ Bekor qilindi';     $stcl='#DC2626'; $stbg='#FEF2F2'; }
+                else                         { $stlbl='✅ Yakunlandi';        $stcl='#4F46E5'; $stbg='#EEF2FF'; }
+                // Notedan telefon/manzil ajratish
+                $note = $dv['note'] ?? '';
+                $tel = $manz = '';
+                if(preg_match('/Tel:\s*([^\|]+)/u',$note,$m)) $tel  = trim($m[1]);
+                if(preg_match('/(Yetkazish|O\'zi oladi):\s*([^\|]+)/u',$note,$m)) $manz = trim($m[2] ?? $m[1]);
+            ?>
+            <tr>
+                <td>
+                    <span style="color:#4F46E5;font-weight:800;">#<?= str_pad($dv['id'],4,'0',STR_PAD_LEFT) ?></span><br>
+                    <small style="color:#94A3B8;"><?= $dv['sale_type']==='yetkazish'?'🚚 Yetkazish':'🏪 O\'zi oladi' ?></small>
+                </td>
+                <td>
+                    <div style="font-weight:700;color:#0F172A;"><?= htmlspecialchars($dv['mijoz_nomi']??'—') ?></div>
+                    <div style="font-size:12px;color:#94A3B8;">@<?= htmlspecialchars($dv['mijoz_login']??'') ?></div>
+                </td>
+                <td>
+                    <?php if($tel): ?><div style="font-weight:700;color:#0F172A;">📞 <?= htmlspecialchars($tel) ?></div><?php endif; ?>
+                    <?php if($manz): ?><div style="font-size:12px;color:#64748B;">📍 <?= htmlspecialchars($manz) ?></div><?php endif; ?>
+                    <?php if(!$tel && !$manz): ?><span style="color:#CBD5E1">—</span><?php endif; ?>
+                </td>
+                <td>
+                    <span style="background:<?= $stbg ?>;color:<?= $stcl ?>;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:800;"><?= $stlbl ?></span>
+                </td>
+                <td style="font-weight:800;color:#0F172A;"><?= number_format($dv['total_price'],0,'.',' ') ?> <small style="color:#94A3B8;">UZS</small></td>
+                <td style="font-size:12px;color:#64748B;"><?= date('d.m.y H:i',strtotime($dv['sale_date'])) ?></td>
+            </tr>
+            <?php endwhile; else: ?>
+            <tr><td colspan="6" class="text-center py-5 text-muted">Hali dastavka buyurtmasi yo'q</td></tr>
+            <?php endif; ?>
+            </tbody>
+        </table>
+        </div>
+    </div>
+</div><!-- /panel-dastavka -->
+
     <div class="modal fade" id="receiptModal" tabindex="-1">
         <div class="modal-dialog modal-sm modal-dialog-centered">
             <div class="modal-content">
@@ -359,6 +476,17 @@ $history_res = mysqli_query($conn, "SELECT s.*, u.name as seller_name FROM sales
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
+    function showTab(tab) {
+        document.getElementById('panel-savdo').style.display    = tab==='savdo'    ? 'block':'none';
+        document.getElementById('panel-dastavka').style.display = tab==='dastavka' ? 'block':'none';
+        document.getElementById('tab-savdo').style.background    = tab==='savdo'    ? '#0F172A':'#E2E8F0';
+        document.getElementById('tab-savdo').style.color         = tab==='savdo'    ? '#fff':'#475569';
+        document.getElementById('tab-dastavka').style.background = tab==='dastavka' ? '#0F172A':'#E2E8F0';
+        document.getElementById('tab-dastavka').style.color      = tab==='dastavka' ? '#fff':'#475569';
+    }
+    // URL da tab=dastavka bo'lsa avtomatik ochish
+    if(window.location.search.includes('tab=dastavka')) showTab('dastavka');
+
     // Chekni chaqiruvchi funksiya
     function openReceipt(saleId) {
         $('#receiptContainer').html('<div class="text-center text-muted my-4"><i class="fas fa-spinner fa-spin fa-2x mb-2"></i><br>Kuting...</div>');

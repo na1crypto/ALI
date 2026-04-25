@@ -95,35 +95,24 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 }
 
 /* MAIN LAYOUT */
-.layout{display:flex;height:calc(100vh - 54px);overflow:hidden;}
+.layout{display:flex;flex-direction:column;height:calc(100vh - 54px);overflow:hidden;}
 
-/* LEFT SIDEBAR — kategoriyalar */
-.sidebar{
-  width:72px;flex-shrink:0;
-  background:#fff;border-right:1px solid var(--border);
-  overflow-y:auto;scrollbar-width:none;
-  padding:6px 5px;display:flex;flex-direction:column;gap:2px;
+/* TOP CATEGORIES BAR */
+.cats-bar{
+  background:#fff;border-bottom:1px solid var(--border);
+  padding:8px 10px;display:flex;gap:6px;
+  overflow-x:auto;scrollbar-width:none;flex-shrink:0;
 }
-.sidebar::-webkit-scrollbar{display:none;}
+.cats-bar::-webkit-scrollbar{display:none;}
 .scat{
-  display:flex;flex-direction:column;align-items:center;gap:2px;
-  padding:8px 4px;border-radius:10px;cursor:pointer;border:none;
-  background:transparent;transition:.15s;
-  font-size:9px;font-weight:700;color:var(--muted);
-  text-align:center;line-height:1.2;word-break:break-word;
+  display:flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:20px;cursor:pointer;border:none;
+  background:#f1f5f9;transition:.15s;white-space:nowrap;flex-shrink:0;
+  font-size:12px;font-weight:700;color:var(--muted);
 }
-.scat-ic{
-  width:38px;height:38px;border-radius:10px;
-  background:#f1f5f9;font-size:18px;
-  display:flex;align-items:center;justify-content:center;
-  transition:.15s;
-}
-.scat.active{color:var(--primary);}
-.scat.active .scat-ic{
-  background:linear-gradient(135deg,var(--primary),var(--primary-d));
-  color:#fff;box-shadow:0 3px 8px rgba(79,70,229,.3);
-}
-.scat:active{transform:scale(.92);}
+.scat-ic{font-size:16px;}
+.scat.active{background:linear-gradient(135deg,var(--primary),var(--primary-d));color:#fff;box-shadow:0 3px 8px rgba(79,70,229,.3);}
+.scat:active{transform:scale(.95);}
 
 /* MAIN AREA */
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
@@ -154,7 +143,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
   flex:1;overflow-y:auto;overflow-x:hidden;
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
-  gap:8px;padding:8px 10px 100px;
+  gap:8px;padding:8px 10px 20px;
   align-content:start;
 }
 .grid::-webkit-scrollbar{width:3px;}
@@ -191,26 +180,24 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 .punit{font-size:10px;color:var(--muted);font-weight:600;}
 .pminq{font-size:10px;color:#f59e0b;font-weight:700;margin-top:2px;}
 
-/* FLOATING CART BAR */
+/* FLOATING CART BAR — o'ng pastda */
 .cart-bar{
-  position:fixed;bottom:0;left:72px;right:0;
-  padding:8px 10px 14px;
-  background:linear-gradient(to top,var(--bg) 80%,transparent);
-  z-index:100;transition:opacity .25s;
+  position:fixed;bottom:16px;right:16px;
+  z-index:100;transition:opacity .25s;width:280px;
 }
 .cart-bar-btn{
   background:linear-gradient(135deg,var(--primary),var(--primary-d));
-  border-radius:14px;padding:12px 16px;
+  border-radius:16px;padding:13px 16px;
   display:flex;align-items:center;justify-content:space-between;
-  box-shadow:0 6px 18px rgba(79,70,229,.4);
+  box-shadow:0 8px 24px rgba(79,70,229,.45);
   cursor:pointer;transition:.15s;border:none;width:100%;
 }
-.cart-bar-btn:active{transform:scale(.98);}
-.cart-bar-btn.empty{background:linear-gradient(135deg,#94a3b8,#64748b);box-shadow:0 3px 8px rgba(0,0,0,.1);}
+.cart-bar-btn:active{transform:scale(.97);}
+.cart-bar-btn.empty{background:linear-gradient(135deg,#94a3b8,#64748b);box-shadow:0 3px 8px rgba(0,0,0,.15);}
 .cb-left{display:flex;align-items:center;gap:8px;}
 .cb-cnt{background:rgba(255,255,255,.2);border-radius:7px;padding:3px 8px;font-size:12px;font-weight:800;color:#fff;}
 .cb-lbl{font-size:13px;font-weight:700;color:rgba(255,255,255,.9);}
-.cb-total{font-size:15px;font-weight:900;color:#fff;}
+.cb-total{font-size:14px;font-weight:900;color:#fff;}
 .cb-arrow{font-size:18px;color:rgba(255,255,255,.7);margin-left:4px;}
 
 /* OVERLAY */
@@ -271,14 +258,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 .cftotal-lbl{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;}
 .cftotal-val{font-size:24px;font-weight:900;color:var(--dark);letter-spacing:-1px;}
 
-/* Phone input */
-.phone-inp{
-  width:100%;padding:10px 12px;border:1.5px solid var(--border);
-  border-radius:10px;font-size:14px;font-weight:600;margin-bottom:8px;
+/* Phone + Manzil inputs */
+.contact-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.contact-inp{
+  width:100%;padding:13px 14px;border:2px solid var(--border);
+  border-radius:12px;font-size:15px;font-weight:600;
   background:#f8fafc;color:var(--dark);
 }
-.phone-inp:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(79,70,229,.1);}
-.phone-inp::placeholder{color:#94a3b8;font-weight:500;}
+.contact-inp:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(79,70,229,.1);}
+.contact-inp::placeholder{color:#94a3b8;font-weight:500;font-size:13px;}
 
 /* Delivery */
 .deliv-box{
@@ -362,18 +350,18 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 <!-- MAIN LAYOUT -->
 <div class="layout">
 
-  <!-- SIDEBAR: kategoriyalar -->
-  <div class="sidebar">
+  <!-- TOP CATEGORIES BAR -->
+  <div class="cats-bar">
     <?php
     $icons = ['🏠','🥤','🍫','🧴','🧹','📦','🍕','🥛','🧃','🍬','🧊','🍞','🌿','🐟','🥩','🍳','🧺','💊','🏮','🎁'];
     $ii = 0;
     ?>
     <button class="scat active" onclick="filterCat('',this)">
-      <div class="scat-ic">🏠</div>Barcha
+      <span class="scat-ic">🏠</span>Barcha
     </button>
     <?php foreach($categories as $c): $ico=$icons[$ii%count($icons)];$ii++; ?>
     <button class="scat" onclick="filterCat(<?= json_encode($c['name']) ?>,this)">
-      <div class="scat-ic"><?= $ico ?></div><?= htmlspecialchars(mb_substr($c['name'],0,7)) ?>
+      <span class="scat-ic"><?= $ico ?></span><?= htmlspecialchars($c['name']) ?>
     </button>
     <?php endforeach; ?>
   </div>
@@ -458,16 +446,18 @@ $cbSum   = $cartCount ? number_format($cartTotal,0,'.',' ').' UZS' : '';
       <span class="cftotal-lbl">JAMI</span>
       <span class="cftotal-val" id="cfTotal">0</span>
     </div>
-    <!-- Telefon (har doim ko'rinadi) -->
-    <input type="tel" class="phone-inp" id="phoneInp" placeholder="📞 Telefon raqamingiz (+998...)" maxlength="20">
+    <!-- Telefon + Manzil (yonma-yon, katta) -->
+    <div class="contact-row">
+      <input type="tel" class="contact-inp" id="phoneInp" placeholder="📞 +998 XX XXX XX XX" maxlength="20">
+      <input type="text" class="contact-inp" id="addressInp" placeholder="📍 Manzil (ko'cha, uy)">
+    </div>
     <!-- Yetkazish (faqat 1.5M dan yuqori) -->
     <div class="deliv-box" id="delivBox">
       <div class="deliv-row" onclick="toggleDeliv()">
         <input type="checkbox" id="delivChk">
-        <span>🚚 Yetkazib berish</span>
-        <span class="deliv-badge">BEPUL</span>
+        <span>🚚 Yetkazib berish (BEPUL)</span>
+        <span class="deliv-badge">✓</span>
       </div>
-      <input type="text" id="manzilInp" placeholder="📍 Manzilingizni yozing...">
     </div>
     <button class="checkout-btn" id="checkoutBtn" onclick="checkout()">
       ✅ Buyurtma berish
@@ -658,7 +648,6 @@ function renderDrawer() {
   } else {
     deliv.classList.remove('show');
     document.getElementById('delivChk').checked = false;
-    document.getElementById('manzilInp').style.display = 'none';
     document.getElementById('cfDeliv').textContent = '—';
   }
 }
@@ -682,31 +671,33 @@ function delItem(id) {
 function toggleDeliv() {
   const chk = document.getElementById('delivChk');
   chk.checked = !chk.checked;
-  document.getElementById('manzilInp').style.display = chk.checked ? 'block' : 'none';
+  // Manzil endi yuqorida contact-row da
+  if (chk.checked) {
+    document.getElementById('addressInp').focus();
+    document.getElementById('addressInp').placeholder = '📍 Yetkazish manzilini yozing...';
+  } else {
+    document.getElementById('addressInp').placeholder = '📍 Manzil (ko\'cha, uy)';
+  }
 }
 
 async function checkout() {
   const btn      = document.getElementById('checkoutBtn');
   const phone    = document.getElementById('phoneInp').value.trim();
+  const address  = document.getElementById('addressInp').value.trim();
   const yetkazish= document.getElementById('delivChk').checked ? 1 : 0;
-  const manzil   = document.getElementById('manzilInp').value.trim();
 
   if (!phone) {
     document.getElementById('phoneInp').focus();
     document.getElementById('phoneInp').style.borderColor='var(--red)';
-    setTimeout(()=>document.getElementById('phoneInp').style.borderColor='',2000);
-    return;
-  }
-  if (yetkazish && !manzil) {
-    document.getElementById('manzilInp').focus();
+    setTimeout(()=>document.getElementById('phoneInp').style.borderColor='var(--border)',2000);
     return;
   }
 
   btn.disabled = true; btn.textContent = '⏳ Yuborilmoqda...';
   const fd = new FormData();
   fd.append('phone',     phone);
+  fd.append('manzil',   address);
   fd.append('yetkazish', yetkazish);
-  fd.append('manzil',   manzil);
 
   const res = await fetch('/mijoz/api.php?action=checkout',{method:'POST',body:fd});
   const d   = await res.json();
