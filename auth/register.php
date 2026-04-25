@@ -3,8 +3,11 @@ session_start();
 require_once __DIR__ . '/../config/dokon_db.php';
 
 if (isset($_SESSION['user_id'])) {
-    if ($_SESSION['role'] === 'mijoz') header("Location: /mijoz/index.php");
-    else header("Location: /admin/dashboard.php");
+    $r = $_SESSION['role'] ?? '';
+    if ($r === 'mijoz')                             header("Location: /mijoz/index.php");
+    elseif ($r === 'menejer')                       header("Location: /menejer/index.php");
+    elseif ($r === 'sotuvchi')                      header("Location: /sotuvchi/dashboard.php");
+    else                                            header("Location: /admin/dashboard.php");
     exit;
 }
 
