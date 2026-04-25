@@ -12,6 +12,10 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'mijoz') {
 require_once "../config/dokon_db.php";
 $action = $_GET['action'] ?? '';
 
+// ── Bir martalik migration (ustunlar yo'q bo'lsa qo'shadi) ──
+@mysqli_query($conn, "ALTER TABLE products ADD COLUMN IF NOT EXISTS image MEDIUMTEXT DEFAULT NULL");
+@mysqli_query($conn, "ALTER TABLE products ADD COLUMN IF NOT EXISTS min_qty INT NOT NULL DEFAULT 1");
+
 // ── Mahsulotlarni qidirish / barcha mahsulotlar ──
 if ($action === 'products') {
     $q = mysqli_real_escape_string($conn, $_POST['q'] ?? '');

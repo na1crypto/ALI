@@ -105,16 +105,20 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
 }
 .p-card:active{transform:scale(.97);}
 .p-img-wrap{
-  width:100%;aspect-ratio:1/1;overflow:hidden;
+  width:100%;overflow:hidden;
   background:linear-gradient(135deg,#f1f5f9,#e2e8f0);
   position:relative;flex-shrink:0;
+  padding-top:100%; /* square via padding trick */
 }
-.p-img-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
+.p-img-wrap > *{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+}
+.p-img-wrap img{object-fit:cover;display:block;}
 .p-img-placeholder{
   width:100%;height:100%;
   display:flex;align-items:center;justify-content:center;
   font-size:42px;font-weight:900;color:#fff;
-  background:var(--grad, linear-gradient(135deg,#6366f1,#4f46e5));
+  background:linear-gradient(135deg,#6366f1,#4f46e5);
 }
 .p-body{padding:10px 10px 12px;display:flex;flex-direction:column;gap:5px;flex:1;}
 .p-name{font-size:13px;font-weight:700;color:var(--text);line-height:1.3;}
@@ -294,7 +298,9 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);mi
   <!-- JS to'ldiradi -->
   <?php for($i=0;$i<8;$i++): ?>
   <div class="p-card">
-    <div class="skel" style="aspect-ratio:1/1;width:100%;"></div>
+    <div style="width:100%;padding-top:100%;position:relative;">
+      <div class="skel" style="position:absolute;top:0;left:0;width:100%;height:100%;border-radius:0;"></div>
+    </div>
     <div class="p-body" style="gap:6px;">
       <div class="skel" style="height:13px;width:85%;border-radius:6px;"></div>
       <div class="skel" style="height:11px;width:50%;border-radius:6px;"></div>
@@ -396,7 +402,7 @@ function renderGrid(products) {
 
     const imgHtml = p.image
       ? `<img src="${p.image}" alt="${escHtml(p.name)}" loading="lazy">`
-      : `<div class="p-img-placeholder" style="--grad:${grad}">${firstLetter(p.name)}</div>`;
+      : `<div class="p-img-placeholder" style="background:${grad}">${firstLetter(p.name)}</div>`;
 
     return `
     <div class="p-card" id="card_${p.id}">
