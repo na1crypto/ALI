@@ -4,6 +4,8 @@ require_once "../middleware/menejer_check.php";
 require_once "../config/dokon_db.php";
 @mysqli_query($conn,"ALTER TABLE sales ADD COLUMN IF NOT EXISTS status VARCHAR(30) DEFAULT 'tolangan'");
 @mysqli_query($conn,"ALTER TABLE sales ADD COLUMN IF NOT EXISTS source VARCHAR(20) DEFAULT 'pos'");
+@mysqli_query($conn,"ALTER TABLE sales ADD COLUMN IF NOT EXISTS note TEXT DEFAULT NULL");
+@mysqli_query($conn,"ALTER TABLE sales ADD COLUMN IF NOT EXISTS customer_id INT DEFAULT NULL");
 
 $site_q = mysqli_fetch_assoc(mysqli_query($conn,"SELECT store_name FROM settings WHERE id=1"));
 $site_name = $site_q['store_name'] ?? "SMART POS";

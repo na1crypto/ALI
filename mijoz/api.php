@@ -17,6 +17,8 @@ $action = $_GET['action'] ?? '';
 @mysqli_query($conn, "ALTER TABLE products ADD COLUMN IF NOT EXISTS min_qty INT NOT NULL DEFAULT 1");
 @mysqli_query($conn, "ALTER TABLE sales ADD COLUMN IF NOT EXISTS status VARCHAR(30) DEFAULT 'tolangan'");
 @mysqli_query($conn, "ALTER TABLE sales ADD COLUMN IF NOT EXISTS source VARCHAR(20) DEFAULT 'pos'");
+@mysqli_query($conn, "ALTER TABLE sales ADD COLUMN IF NOT EXISTS note TEXT DEFAULT NULL");
+@mysqli_query($conn, "ALTER TABLE sales ADD COLUMN IF NOT EXISTS customer_id INT DEFAULT NULL");
 
 // ── Mahsulotlarni qidirish / barcha mahsulotlar ──
 if ($action === 'products') {

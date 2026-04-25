@@ -10,6 +10,8 @@ require_once "../config/dokon_db.php";
 // Migration
 @mysqli_query($conn, "ALTER TABLE sales ADD COLUMN IF NOT EXISTS status VARCHAR(30) DEFAULT 'tolangan'");
 @mysqli_query($conn, "ALTER TABLE sales ADD COLUMN IF NOT EXISTS source VARCHAR(20) DEFAULT 'pos'");
+@mysqli_query($conn, "ALTER TABLE sales ADD COLUMN IF NOT EXISTS note TEXT DEFAULT NULL");
+@mysqli_query($conn, "ALTER TABLE sales ADD COLUMN IF NOT EXISTS customer_id INT DEFAULT NULL");
 
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 

@@ -5,6 +5,8 @@ require_once "../config/dokon_db.php";
 
 @mysqli_query($conn,"ALTER TABLE sales ADD COLUMN IF NOT EXISTS status VARCHAR(30) DEFAULT 'tolangan'");
 @mysqli_query($conn,"ALTER TABLE sales ADD COLUMN IF NOT EXISTS source VARCHAR(20) DEFAULT 'pos'");
+@mysqli_query($conn,"ALTER TABLE sales ADD COLUMN IF NOT EXISTS note TEXT DEFAULT NULL");
+@mysqli_query($conn,"ALTER TABLE sales ADD COLUMN IF NOT EXISTS customer_id INT DEFAULT NULL");
 @mysqli_query($conn,"CREATE TABLE IF NOT EXISTS stock_entries (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     product_id INT NOT NULL,
