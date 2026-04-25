@@ -266,10 +266,19 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 .cfline{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);font-weight:600;margin-bottom:4px;}
 .cftotal{
   display:flex;justify-content:space-between;align-items:baseline;
-  margin:8px 0 12px;padding-top:8px;border-top:2px solid var(--dark);
+  margin:8px 0 10px;padding-top:8px;border-top:2px solid var(--dark);
 }
 .cftotal-lbl{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;}
 .cftotal-val{font-size:24px;font-weight:900;color:var(--dark);letter-spacing:-1px;}
+
+/* Phone input */
+.phone-inp{
+  width:100%;padding:10px 12px;border:1.5px solid var(--border);
+  border-radius:10px;font-size:14px;font-weight:600;margin-bottom:8px;
+  background:#f8fafc;color:var(--dark);
+}
+.phone-inp:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(79,70,229,.1);}
+.phone-inp::placeholder{color:#94a3b8;font-weight:500;}
 
 /* Delivery */
 .deliv-box{
@@ -300,6 +309,21 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 .checkout-btn:active{transform:scale(.97);}
 .checkout-btn:disabled{opacity:.6;pointer-events:none;}
 
+/* ORDERS MODAL */
+.omodal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none;align-items:flex-end;justify-content:center;}
+.omodal.show{display:flex;}
+.obox{background:#fff;border-radius:20px 20px 0 0;padding:20px 18px 30px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;animation:slideup .3s ease;}
+@keyframes slideup{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.obox-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.obox-hd h3{font-size:17px;font-weight:800;color:var(--dark);}
+.oitem{border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
+.oitem-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.oitem-id{font-size:13px;font-weight:800;color:var(--primary);}
+.oitem-date{font-size:11px;color:var(--muted);}
+.oitem-status{font-size:12px;font-weight:800;padding:4px 10px;border-radius:20px;background:#f1f5f9;}
+.oitem-note{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4;}
+.oitem-total{font-size:15px;font-weight:900;color:var(--dark);margin-top:6px;}
+
 /* SUCCESS MODAL */
 .smodal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none;align-items:center;justify-content:center;padding:20px;}
 .smodal.show{display:flex;}
@@ -307,7 +331,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 @keyframes pop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
 .sbox h2{font-size:20px;font-weight:800;margin:12px 0 8px;}
 .sbox p{color:var(--muted);font-size:13px;line-height:1.5;margin-bottom:20px;}
-.ok-btn{width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;}
+.ok-btn{width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;}
+.ord-btn{width:100%;padding:10px;background:#f1f5f9;color:var(--dark);border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;}
 
 /* SKELETON */
 .skel{background:linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%);background-size:200%;animation:sk 1.2s infinite;border-radius:8px;}
@@ -325,6 +350,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
     <span class="logo"><?= htmlspecialchars($site) ?></span>
   </div>
   <div style="display:flex;align-items:center;gap:8px;">
+    <button onclick="openOrders()" style="background:#EEF2FF;border:none;border-radius:9px;padding:6px 11px;font-size:12px;font-weight:800;color:#4318FF;cursor:pointer;">📋 Buyurtmalarim</button>
     <div class="user-badge">
       <div class="user-av"><?= mb_strtoupper(mb_substr($ism,0,1)) ?></div>
       <span><?= htmlspecialchars($ism) ?></span>
@@ -432,13 +458,16 @@ $cbSum   = $cartCount ? number_format($cartTotal,0,'.',' ').' UZS' : '';
       <span class="cftotal-lbl">JAMI</span>
       <span class="cftotal-val" id="cfTotal">0</span>
     </div>
+    <!-- Telefon (har doim ko'rinadi) -->
+    <input type="tel" class="phone-inp" id="phoneInp" placeholder="📞 Telefon raqamingiz (+998...)" maxlength="20">
+    <!-- Yetkazish (faqat 1.5M dan yuqori) -->
     <div class="deliv-box" id="delivBox">
       <div class="deliv-row" onclick="toggleDeliv()">
         <input type="checkbox" id="delivChk">
-        <span>🚚 Yetkazish xizmati</span>
+        <span>🚚 Yetkazib berish</span>
         <span class="deliv-badge">BEPUL</span>
       </div>
-      <input type="text" id="manzilInp" placeholder="Manzilingizni yozing...">
+      <input type="text" id="manzilInp" placeholder="📍 Manzilingizni yozing...">
     </div>
     <button class="checkout-btn" id="checkoutBtn" onclick="checkout()">
       ✅ Buyurtma berish
@@ -453,6 +482,20 @@ $cbSum   = $cartCount ? number_format($cartTotal,0,'.',' ').' UZS' : '';
     <h2>Buyurtma qabul!</h2>
     <p id="smsg">Tez orada siz bilan bog'lanamiz.</p>
     <button class="ok-btn" onclick="document.getElementById('smodal').classList.remove('show')">Tushunarli</button>
+    <button class="ord-btn" onclick="document.getElementById('smodal').classList.remove('show');openOrders()">📋 Buyurtmamni ko'rish</button>
+  </div>
+</div>
+
+<!-- BUYURTMALARIM MODAL -->
+<div class="omodal" id="omodal" onclick="if(event.target===this)closeOrders()">
+  <div class="obox">
+    <div class="obox-hd">
+      <h3>📋 Mening Buyurtmalarim</h3>
+      <button onclick="closeOrders()" style="background:#f1f5f9;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:15px;color:#64748b">✕</button>
+    </div>
+    <div id="ordersBody">
+      <div style="text-align:center;padding:30px;color:#94a3b8">⏳ Yuklanmoqda...</div>
+    </div>
   </div>
 </div>
 
@@ -643,28 +686,76 @@ function toggleDeliv() {
 }
 
 async function checkout() {
-  const btn = document.getElementById('checkoutBtn');
-  btn.disabled = true; btn.textContent = '⏳ Yuborilmoqda...';
-  const yetkazish = document.getElementById('delivChk').checked ? 1 : 0;
-  const manzil = document.getElementById('manzilInp').value.trim();
-  if (yetkazish && !manzil) {
-    alert('Iltimos, manzilingizni kiriting!');
-    btn.disabled=false; btn.innerHTML='✅ Buyurtma berish'; return;
+  const btn      = document.getElementById('checkoutBtn');
+  const phone    = document.getElementById('phoneInp').value.trim();
+  const yetkazish= document.getElementById('delivChk').checked ? 1 : 0;
+  const manzil   = document.getElementById('manzilInp').value.trim();
+
+  if (!phone) {
+    document.getElementById('phoneInp').focus();
+    document.getElementById('phoneInp').style.borderColor='var(--red)';
+    setTimeout(()=>document.getElementById('phoneInp').style.borderColor='',2000);
+    return;
   }
+  if (yetkazish && !manzil) {
+    document.getElementById('manzilInp').focus();
+    return;
+  }
+
+  btn.disabled = true; btn.textContent = '⏳ Yuborilmoqda...';
   const fd = new FormData();
+  fd.append('phone',     phone);
   fd.append('yetkazish', yetkazish);
-  fd.append('manzil', manzil);
+  fd.append('manzil',   manzil);
+
   const res = await fetch('/mijoz/api.php?action=checkout',{method:'POST',body:fd});
-  const d = await res.json();
+  const d   = await res.json();
   if (d.status === 'ok') {
     cart = {}; syncCart(); closeDrawer();
     const msg = yetkazish
-      ? `Buyurtma №${d.sale_id}. Jami: ${FMT(d.total)} UZS. Yetkazib beramiz!`
-      : `Buyurtma №${d.sale_id}. Jami: ${FMT(d.total)} UZS. O'zingiz olib ketasiz.`;
+      ? `Buyurtma №${d.sale_id} qabul qilindi. Jami: ${FMT(d.total)} UZS.\nYetkazib beramiz! ⏳ Kutilmoqda...`
+      : `Buyurtma №${d.sale_id} qabul qilindi. Jami: ${FMT(d.total)} UZS.\nO'zingiz olasiz. ⏳ Kutilmoqda...`;
     document.getElementById('smsg').textContent = msg;
     document.getElementById('smodal').classList.add('show');
-  } else { alert(d.message || 'Xatolik!'); }
+  } else {
+    alert(d.message || 'Xatolik!');
+  }
   btn.disabled=false; btn.innerHTML='✅ Buyurtma berish';
+}
+
+// ── BUYURTMALARIM ──
+function openOrders() {
+  document.getElementById('omodal').classList.add('show');
+  loadOrders();
+}
+function closeOrders() {
+  document.getElementById('omodal').classList.remove('show');
+}
+
+async function loadOrders() {
+  document.getElementById('ordersBody').innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8">⏳ Yuklanmoqda...</div>';
+  const res = await fetch('/mijoz/api.php?action=my_orders');
+  const d   = await res.json();
+  if (!d.orders || !d.orders.length) {
+    document.getElementById('ordersBody').innerHTML =
+      '<div style="text-align:center;padding:40px;color:#94a3b8;font-size:13px">📭 Hali buyurtma yo\'q</div>';
+    return;
+  }
+  document.getElementById('ordersBody').innerHTML = d.orders.map(o => {
+    const dt = new Date(o.sale_date);
+    const dateStr = dt.toLocaleDateString('uz-UZ',{day:'2-digit',month:'2-digit',year:'numeric'})
+                  + ' ' + dt.toLocaleTimeString('uz-UZ',{hour:'2-digit',minute:'2-digit'});
+    const typeIco = o.sale_type === 'yetkazish' ? '🚚' : '🏪';
+    return `<div class="oitem">
+      <div class="oitem-top">
+        <span class="oitem-id">#${String(o.id).padStart(4,'0')} ${typeIco}</span>
+        <span class="oitem-status" style="color:${o.status_color}">${o.status_label}</span>
+      </div>
+      <div class="oitem-date">${dateStr}</div>
+      ${o.note ? `<div class="oitem-note">${escH(o.note)}</div>` : ''}
+      <div class="oitem-total">${FMT(o.total_price)} UZS</div>
+    </div>`;
+  }).join('');
 }
 
 function escH(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }

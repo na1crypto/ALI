@@ -145,10 +145,14 @@ if ($action === 'checkout') {
     $cart      = $_SESSION['cart'] ?? [];
     $yetkazish = (int)($_POST['yetkazish'] ?? 0);
     $manzil    = mysqli_real_escape_string($conn, trim($_POST['manzil'] ?? ''));
-    $izoh      = mysqli_real_escape_string($conn, trim($_POST['izoh'] ?? ''));
+    $phone     = mysqli_real_escape_string($conn, trim($_POST['phone']  ?? ''));
+    $izoh      = mysqli_real_escape_string($conn, trim($_POST['izoh']   ?? ''));
 
     if (empty($cart)) {
         echo json_encode(['status'=>'error','message'=>'Savat bo\'sh!']); exit;
+    }
+    if (!$phone) {
+        echo json_encode(['status'=>'error','message'=>'Telefon raqamingizni kiriting!']); exit;
     }
 
     mysqli_begin_transaction($conn);
@@ -158,34 +162,42 @@ if ($action === 'checkout') {
         foreach ($cart as $item) $total += $item['price'] * $item['qty'];
         $final = $total;
 
-        $note_text = $yetkazish
-            ? "Yetkazish: $manzil" . ($izoh ? ". $izoh" : "")
-            : "Olib ketadi" . ($izoh ? ". $izoh" : "");
-        $note_esc  = mysqli_real_escape_string($conn, $note_text);
+        // Telefon raqamini users jadvalida yangilash
+        mysqli_query($conn, "UPDATE users SET phone='$phone' WHERE id=$user_id");
+
+        $note_parts = ["Tel: $phone"];
+        if ($yetkazish) $note_parts[] = "Yetkazish: $manzil";
+        else            $note_parts[] = "O'zi oladi";
+        if ($izoh)      $note_parts[] = $izoh;
+        $note_esc  = mysqli_real_escape_string($conn, implode(' | ', $note_parts));
         $sale_type = $yetkazish ? 'yetkazish' : 'oddiy';
 
-        // source='mijoz', status='yangi' — menejer ko'rishi uchun
+        // TiDB: id uchun MAX(id)+1
+        $nid_r   = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COALESCE(MAX(id),0)+1 AS nid FROM sales"));
+        $new_sid = (int)$nid_r['nid'];
+
         $sql_sale = "INSERT INTO sales (id, user_id, customer_id, total_price, payment_method, sale_type, note, status, source)
-                     VALUES (NULL, $user_id, NULL, $final, 'online', '$sale_type', '$note_esc', 'yangi', 'mijoz')";
+                     VALUES ($new_sid, $user_id, NULL, $final, 'online', '$sale_type', '$note_esc', 'yangi', 'mijoz')";
         if (!mysqli_query($conn, $sql_sale)) {
-            $sql_sale = "INSERT INTO sales (id, user_id, total_price, payment_method, note, status, source)
-                         VALUES (NULL, $user_id, $final, 'online', '$note_esc', 'yangi', 'mijoz')";
-            if (!mysqli_query($conn, $sql_sale)) {
-                throw new Exception("Buyurtma yozilmadi: " . mysqli_error($conn));
-            }
+            throw new Exception("Buyurtma yozilmadi: " . mysqli_error($conn));
         }
-        $sale_id = mysqli_insert_id($conn);
+        $sale_id = $new_sid;
+
+        // sale_items uchun ham MAX(id)+1
+        $si_nid_r = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COALESCE(MAX(id),0)+1 AS nid FROM sale_items"));
+        $si_id    = (int)$si_nid_r['nid'];
 
         foreach ($cart as $item) {
             $p  = (int)$item['id'];
             $q  = (int)$item['qty'];
             $pr = (float)$item['price'];
-            $total_item = $pr * $q;
+            $ti = $pr * $q;
             $sql_item = "INSERT INTO sale_items (id, sale_id, product_id, quantity, unit_price, price)
-                         VALUES (NULL, $sale_id, $p, $q, $pr, $total_item)";
+                         VALUES ($si_id, $sale_id, $p, $q, $pr, $ti)";
             if (!mysqli_query($conn, $sql_item)) {
                 throw new Exception("Mahsulot yozilmadi: " . mysqli_error($conn));
             }
+            $si_id++;
             mysqli_query($conn, "UPDATE products SET quantity=quantity-$q WHERE id=$p");
         }
 
@@ -196,6 +208,38 @@ if ($action === 'checkout') {
         mysqli_rollback($conn);
         echo json_encode(['status'=>'error','message'=>$e->getMessage()]);
     }
+    exit;
+}
+
+// ── Mening buyurtmalarim (mijoz uchun status ko'rish) ──
+if ($action === 'my_orders') {
+    $uid = (int)$_SESSION['user_id'];
+    $res = mysqli_query($conn,
+        "SELECT s.id, s.sale_date, s.total_price, s.status, s.sale_type, s.note
+         FROM sales s
+         WHERE s.user_id=$uid AND s.source='mijoz'
+         ORDER BY s.id DESC LIMIT 10"
+    );
+    $orders = [];
+    if ($res) while ($row = mysqli_fetch_assoc($res)) {
+        $st = $row['status'];
+        if ($st === 'yangi')          { $label = '⏳ Kutilmoqda';            $color = '#FFB547'; }
+        elseif ($st === 'qabul_qilindi') { $label = '📦 Tayyorlanmoqda';    $color = '#05CD99'; }
+        elseif ($st === 'rad_etildi')    { $label = '❌ Bekor qilindi';      $color = '#EE5D50'; }
+        elseif ($st === 'tolangan')      { $label = '✅ Yakunlandi';         $color = '#4318FF'; }
+        else                             { $label = $st;                      $color = '#A3AED0'; }
+        $orders[] = [
+            'id'          => (int)$row['id'],
+            'sale_date'   => $row['sale_date'],
+            'total_price' => (float)$row['total_price'],
+            'status'      => $st,
+            'status_label'=> $label,
+            'status_color'=> $color,
+            'sale_type'   => $row['sale_type'],
+            'note'        => $row['note'],
+        ];
+    }
+    echo json_encode(['status'=>'ok','orders'=>$orders]);
     exit;
 }
 
