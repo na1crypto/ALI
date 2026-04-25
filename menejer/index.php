@@ -20,18 +20,29 @@ require_once "../config/dokon_db.php";
 
 $today = date('Y-m-d');
 
-// ── STATISTIKA ──
-$st_q = mysqli_query($conn,"
-    SELECT
-        (SELECT COUNT(*) FROM sales WHERE source='mijoz' AND status='yangi') AS yangi_cnt,
-        (SELECT COUNT(*) FROM sales WHERE source='mijoz' AND DATE(sale_date)='$today') AS bugun_cnt,
-        (SELECT COALESCE(SUM(total_price),0) FROM sales WHERE source='mijoz' AND DATE(sale_date)='$today') AS bugun_summa,
-        (SELECT COUNT(*) FROM products WHERE quantity>0) AS prod_cnt,
-        (SELECT COUNT(*) FROM products WHERE quantity<=5 AND quantity>0) AS low_cnt,
-        (SELECT COUNT(*) FROM products WHERE quantity=0) AS zero_cnt,
-        (SELECT COUNT(*) FROM users WHERE role='mijoz') AS mijoz_cnt
-");
-$st = mysqli_fetch_assoc($st_q);
+// ── STATISTIKA — alohida so'rovlar (TiDB subquery muammosi uchun) ──
+$r = mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) AS c FROM sales WHERE source='mijoz' AND status='yangi'"));
+$yangi_cnt  = (int)($r['c'] ?? 0);
+
+$r = mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) AS c FROM sales WHERE source='mijoz' AND DATE(sale_date)='$today'"));
+$bugun_cnt  = (int)($r['c'] ?? 0);
+
+$r = mysqli_fetch_assoc(mysqli_query($conn,"SELECT COALESCE(SUM(total_price),0) AS s FROM sales WHERE source='mijoz' AND DATE(sale_date)='$today'"));
+$bugun_summa = (float)($r['s'] ?? 0);
+
+$r = mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) AS c FROM products WHERE quantity>0"));
+$prod_cnt   = (int)($r['c'] ?? 0);
+
+$r = mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) AS c FROM products WHERE quantity<=5 AND quantity>0"));
+$low_cnt    = (int)($r['c'] ?? 0);
+
+$r = mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) AS c FROM products WHERE quantity=0"));
+$zero_cnt   = (int)($r['c'] ?? 0);
+
+$r = mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) AS c FROM users WHERE role='mijoz'"));
+$mijoz_cnt  = (int)($r['c'] ?? 0);
+
+$st = compact('yangi_cnt','bugun_cnt','bugun_summa','prod_cnt','low_cnt','zero_cnt','mijoz_cnt');
 
 // ── OXIRGI YANGI BUYURTMALAR (5 ta) ──
 $orders_q = mysqli_query($conn,"

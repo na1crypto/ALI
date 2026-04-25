@@ -19,12 +19,15 @@ $msg_type = '';
 
 // ── Tovar qabul qilish ──
 if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['qabul'])) {
-    $pid      = (int)($_POST['product_id'] ?? 0);
-    $qty      = (float)($_POST['qty'] ?? 0);
-    $cost     = (float)($_POST['cost_price'] ?? 0);
-    $supplier = mysqli_real_escape_string($conn, trim($_POST['supplier'] ?? ''));
-    $note     = mysqli_real_escape_string($conn, trim($_POST['note'] ?? ''));
-    $uid      = (int)$_SESSION['user_id'];
+    $pid         = (int)($_POST['product_id'] ?? 0);
+    $qty         = (float)($_POST['qty'] ?? 0);
+    $cost        = (float)($_POST['cost_price'] ?? 0);
+    $optom       = (float)($_POST['optom_price'] ?? 0);
+    $sotuv       = (float)($_POST['price'] ?? 0);
+    $expiry      = trim($_POST['expiry_date'] ?? '');
+    $supplier    = mysqli_real_escape_string($conn, trim($_POST['supplier'] ?? ''));
+    $note        = mysqli_real_escape_string($conn, trim($_POST['note'] ?? ''));
+    $uid         = (int)$_SESSION['user_id'];
 
     if ($pid <= 0 || $qty <= 0) {
         $msg = 'Mahsulot va miqdorni to\'liq kiriting!';
@@ -32,19 +35,22 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['qabul'])) {
     } else {
         $prod = mysqli_fetch_assoc(mysqli_query($conn, "SELECT name,unit,purchase_price FROM products WHERE id=$pid"));
         if (!$prod) {
-            $msg = 'Mahsulot topilmadi!'; $msg_type='err';
+            $msg = 'Mahsulot topilmadi!'; $msg_type = 'err';
         } else {
             // 1. stock_entries ga yoz
             mysqli_query($conn, "INSERT INTO stock_entries (product_id, quantity, cost_price, supplier, note, created_by)
                 VALUES ($pid, $qty, $cost, '$supplier', '$note', $uid)");
 
-            // 2. products.quantity ni yangilashtir
+            // 2. Ombor miqdorini yangilashtir
             mysqli_query($conn, "UPDATE products SET quantity=quantity+$qty WHERE id=$pid");
 
-            // 3. Agar cost_price kiritilgan bo'lsa, purchase_price ni yangilashtir
-            if ($cost > 0) {
-                mysqli_query($conn, "UPDATE products SET purchase_price=$cost WHERE id=$pid");
-            }
+            // 3. Narxlarni yangilashtir (kiritilgan bo'lsa)
+            $updates = [];
+            if ($cost  > 0) $updates[] = "purchase_price=$cost";
+            if ($optom > 0) $updates[] = "optom_price=$optom";
+            if ($sotuv > 0) $updates[] = "price=$sotuv";
+            if ($expiry)    $updates[] = "expiry_date='" . mysqli_real_escape_string($conn,$expiry) . "'";
+            if ($updates)   mysqli_query($conn, "UPDATE products SET ".implode(',',$updates)." WHERE id=$pid");
 
             $msg = htmlspecialchars($prod['name']) . " — " . $qty . " " . ($prod['unit']?:'dona') . " qabul qilindi!";
             $msg_type = 'ok';
@@ -53,7 +59,17 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['qabul'])) {
 }
 
 // Mahsulotlar ro'yxati
-$prods = mysqli_query($conn, "SELECT id, name, quantity, IFNULL(unit,'dona') AS unit, purchase_price FROM products ORDER BY name ASC");
+$prods = mysqli_query($conn, "
+    SELECT p.id, p.name, p.quantity, IFNULL(p.unit,'dona') AS unit,
+           IFNULL(p.purchase_price,0) AS purchase_price,
+           IFNULL(p.optom_price,0) AS optom_price,
+           IFNULL(p.price,0) AS price,
+           IFNULL(p.expiry_date,'') AS expiry_date,
+           IFNULL(c.name,'—') AS kategoriya
+    FROM products p
+    LEFT JOIN categories c ON p.category_id = c.id
+    ORDER BY p.name ASC
+");
 $prods_arr = [];
 if ($prods) while ($r = mysqli_fetch_assoc($prods)) $prods_arr[] = $r;
 
@@ -157,6 +173,9 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:#F4F7FE;color:#1
                 <div class="ps-results" id="psResults"></div>
             </div>
             <div id="selectedProd" style="display:none;background:#EEF2FF;border-radius:10px;padding:9px 13px;margin-bottom:14px;font-size:13px;color:#4318FF;font-weight:700"></div>
+            <div id="kategorijaRow" style="display:none;background:#F8FAFF;border-radius:10px;padding:8px 13px;margin-bottom:14px;font-size:12px;color:#64748b;font-weight:600">
+                📂 Kategoriya: <span id="kategorijaVal" style="color:#111C44;font-weight:700"></span>
+            </div>
 
             <div class="row2">
                 <div>
@@ -168,6 +187,20 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:#F4F7FE;color:#1
                     <input type="number" name="cost_price" class="inp" placeholder="0" min="0" step="1" id="costInput">
                 </div>
             </div>
+
+            <div class="row2">
+                <div>
+                    <label class="lbl">Ulgurja narxi (UZS)</label>
+                    <input type="number" name="optom_price" class="inp" placeholder="0" min="0" step="1" id="optomInput">
+                </div>
+                <div>
+                    <label class="lbl">Sotilish narxi (UZS)</label>
+                    <input type="number" name="price" class="inp" placeholder="0" min="0" step="1" id="sotuvInput">
+                </div>
+            </div>
+
+            <label class="lbl">Yaroqlilik muddati <span style="color:#A3AED0;font-weight:500;text-transform:none">(ixtiyoriy)</span></label>
+            <input type="date" name="expiry_date" class="inp" id="expiryInput">
 
             <label class="lbl">Yetkazuvchi / Ta'minotchi</label>
             <input type="text" name="supplier" class="inp" placeholder="Kompaniya yoki shaxs ismi">
@@ -224,37 +257,48 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:#F4F7FE;color:#1
 var products = <?= json_encode($prods_arr) ?>;
 var selId = 0;
 
-var srchEl = document.getElementById('prodSearch');
-var resEl  = document.getElementById('psResults');
-var pidEl  = document.getElementById('productId');
-var selEl  = document.getElementById('selectedProd');
-var costEl = document.getElementById('costInput');
+var srchEl    = document.getElementById('prodSearch');
+var resEl     = document.getElementById('psResults');
+var pidEl     = document.getElementById('productId');
+var selEl     = document.getElementById('selectedProd');
+var katRow    = document.getElementById('kategorijaRow');
+var katVal    = document.getElementById('kategorijaVal');
+var costEl    = document.getElementById('costInput');
+var optomEl   = document.getElementById('optomInput');
+var sotuvEl   = document.getElementById('sotuvInput');
+var expiryEl  = document.getElementById('expiryInput');
 
 srchEl.addEventListener('input', function(){
     var q = this.value.toLowerCase().trim();
     pidEl.value = '';
     selEl.style.display = 'none';
+    katRow.style.display = 'none';
     selId = 0;
     if (!q) { resEl.style.display='none'; return; }
-    var filtered = products.filter(p => p.name.toLowerCase().includes(q)).slice(0,10);
+    var filtered = products.filter(function(p){ return p.name.toLowerCase().includes(q); }).slice(0,10);
     if (!filtered.length) { resEl.style.display='none'; return; }
-    resEl.innerHTML = filtered.map(p =>
-        '<div class="ps-item" onclick="selectProd('+p.id+','+JSON.stringify(p.name)+','+p.quantity+','+JSON.stringify(p.unit)+','+p.purchase_price+')">'
+    resEl.innerHTML = filtered.map(function(p){
+        return '<div class="ps-item" onclick="selectProd('+p.id+','+JSON.stringify(p.name)+','+p.quantity+','+JSON.stringify(p.unit)+','+p.purchase_price+','+p.optom_price+','+p.price+','+JSON.stringify(p.expiry_date)+','+JSON.stringify(p.kategoriya)+')">'
         + '<strong>' + esc(p.name) + '</strong>'
-        + '<div class="ps-qty">Omborda: ' + p.quantity + ' ' + esc(p.unit) + '</div>'
-        + '</div>'
-    ).join('');
+        + '<div class="ps-qty">Omborda: ' + p.quantity + ' ' + esc(p.unit) + ' &nbsp;|&nbsp; Kat: ' + esc(p.kategoriya) + '</div>'
+        + '</div>';
+    }).join('');
     resEl.style.display = 'block';
 });
 
-function selectProd(id, name, qty, unit, price) {
+function selectProd(id, name, qty, unit, cost, optom, sotuv, expiry, kat) {
     selId = id;
     pidEl.value = id;
     srchEl.value = name;
     resEl.style.display = 'none';
     selEl.textContent = '✓ ' + name + ' (Omborda: ' + qty + ' ' + unit + ')';
     selEl.style.display = 'block';
-    if (price > 0) costEl.value = price;
+    katVal.textContent = kat;
+    katRow.style.display = 'block';
+    if (cost  > 0) costEl.value  = cost;
+    if (optom > 0) optomEl.value = optom;
+    if (sotuv > 0) sotuvEl.value = sotuv;
+    if (expiry)    expiryEl.value = expiry;
 }
 
 function esc(s) { var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
