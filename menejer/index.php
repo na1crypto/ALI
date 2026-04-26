@@ -195,7 +195,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:#F4F7FE;color:#1
   .quick{grid-template-columns:1fr 1fr}
 }
 @media(max-width:640px){
-  body{overflow-y:auto}
+  body{overflow-y:auto;padding-left:0!important;}
   .navbar{padding:0 14px;height:56px}
   .live-clock{font-size:16px}
   .main{padding:12px 14px}
@@ -212,6 +212,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:#F4F7FE;color:#1
   .g3{grid-template-columns:1fr;gap:12px}
   .card{padding:14px}
   .chart-wrap{height:70px}
+  .main{padding-bottom:80px!important}
 }
 </style>
 </head>

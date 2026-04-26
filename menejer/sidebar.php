@@ -57,6 +57,38 @@ $yangi_cnt = (int)($yangi_q['c'] ?? 0);
 .msb-logout svg{stroke:#E02424}
 .msb-logout:hover svg{stroke:#C81E1E}
 body{padding-left:88px;transition:padding-left .35s cubic-bezier(.4,0,.2,1)}
+
+/* 📱 Mobile */
+@media(max-width:768px){
+  .msb{ display:none !important; }
+  body{ padding-left:0 !important; padding-bottom:64px !important; }
+  .mob-mnav{ display:flex !important; }
+}
+.mob-mnav{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;height:60px;
+  background:#fff;border-top:1.5px solid #E9EDF7;
+  z-index:9999;justify-content:space-around;align-items:center;
+  box-shadow:0 -4px 16px rgba(17,28,68,.08);
+  padding-bottom:env(safe-area-inset-bottom,0);
+}
+.mob-mnav-item{
+  display:flex;flex-direction:column;align-items:center;
+  gap:3px;flex:1;padding:6px 4px;
+  color:#A3AED0;text-decoration:none !important;
+  font-size:9px;font-weight:700;letter-spacing:.3px;
+  transition:color .2s;border:none;background:none;cursor:pointer;
+  position:relative;
+}
+.mob-mnav-item svg{width:22px;height:22px;stroke:currentColor;}
+.mob-mnav-item.active{color:#4318FF;}
+.mob-mnav-item.logout{color:#E02424;}
+.mob-mnav-badge{
+  position:absolute;top:4px;right:calc(50% - 18px);
+  background:#EE5D50;color:#fff;font-size:9px;font-weight:800;
+  border-radius:8px;padding:1px 5px;
+  min-width:16px;text-align:center;
+}
 </style>
 
 <div class="msb" id="mSidebar">
@@ -141,3 +173,44 @@ body{padding-left:88px;transition:padding-left .35s cubic-bezier(.4,0,.2,1)}
     sb.addEventListener('mouseleave', function(){ document.body.style.paddingLeft='88px'; });
 })();
 </script>
+
+<!-- 📱 Menejer Mobile Bottom Nav -->
+<nav class="mob-mnav">
+  <a href="/menejer/index.php" class="mob-mnav-item <?= $active_page==='dashboard'?'active':'' ?>">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+      <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+    </svg>
+    Bosh
+  </a>
+  <a href="/menejer/buyurtmalar.php" class="mob-mnav-item <?= $active_page==='buyurtmalar'?'active':'' ?>">
+    <?php if($yangi_cnt>0): ?><span class="mob-mnav-badge"><?= $yangi_cnt ?></span><?php endif; ?>
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+      <line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
+    </svg>
+    Buyurtma
+  </a>
+  <a href="/menejer/kelgan.php" class="mob-mnav-item <?= $active_page==='kelgan'?'active':'' ?>">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+    </svg>
+    Kelgan
+  </a>
+  <a href="/menejer/mahsulotlar.php" class="mob-mnav-item <?= $active_page==='mahsulotlar'?'active':'' ?>">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+      <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
+    </svg>
+    Ombor
+  </a>
+  <a href="/auth/logout.php" class="mob-mnav-item logout"
+     onclick="return confirm('Tizimdan chiqasizmi?')">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#E02424">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+      <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+    Chiqish
+  </a>
+</nav>

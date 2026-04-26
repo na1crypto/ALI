@@ -178,6 +178,49 @@ $dav_yangi = (int)($dav_yangi['c'] ?? 0);
             #printReceiptArea { position: absolute; left: 0; top: 0; width: 80mm; margin: 0; padding: 0; }
             .modal-content { border: none; box-shadow: none; }
         }
+
+        /* 📱 MOBILE */
+        @media(max-width:768px){
+            .main-content {
+                margin-left: 0 !important;
+                padding: 14px 10px 80px !important;
+            }
+            h1 { font-size: 18px !important; }
+            p.text-muted { display: none; }
+            /* Filter: ustma-ust */
+            .filter-section {
+                flex-direction: column;
+                align-items: stretch !important;
+                gap: 10px !important;
+                padding: 14px !important;
+            }
+            .filter-group {
+                flex-direction: column;
+                align-items: stretch !important;
+                gap: 8px !important;
+            }
+            .filter-input { width: 100% !important; }
+            .btn-search { width: 100% !important; padding: 12px !important; }
+            /* Stat kartalar: 2 ustun */
+            .row .col-md-3 { width: 50% !important; flex: 0 0 50%; max-width: 50%; margin-bottom: 10px; }
+            .report-card { padding: 14px !important; gap: 10px !important; }
+            .report-value { font-size: 18px !important; }
+            .report-icon { width: 38px !important; height: 38px !important; font-size: 16px !important; }
+            /* Jadval */
+            .data-table-wrapper { border-radius: 12px !important; }
+            .table th, .table td { padding: 10px 10px !important; font-size: 12px !important; }
+            .data-table-header { padding: 12px 14px !important; flex-wrap: wrap; gap: 8px; }
+            /* Tab tugmalar */
+            #tab-savdo, #tab-dastavka {
+                flex: 1 !important;
+                text-align: center !important;
+                padding: 10px 8px !important;
+                font-size: 13px !important;
+            }
+            /* Side panel: full width */
+            .col-md-4 { width: 100% !important; flex: 0 0 100%; max-width: 100%; }
+            .side-panel { padding: 14px !important; }
+        }
     </style>
 </head>
 <body>

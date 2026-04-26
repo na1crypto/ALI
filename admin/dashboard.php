@@ -114,6 +114,33 @@ body {
     .col-3, .col-4, .col-8 { width: 100%; }
     body { padding-left: 0; }
 }
+/* 📱 MOBILE */
+@media (max-width: 640px) {
+    body { padding-left: 0 !important; }
+    .top-navbar { padding: 0 14px; height: 54px; }
+    .navbar-title { font-size: 16px; }
+    .navbar-sub { display: none; }
+    .user-pill span { display: none; }
+    .user-pill { padding: 4px 8px 4px 4px; }
+    .main-content { padding: 14px 12px 80px; }
+    .row { margin: 0 -6px; }
+    .col, .col-3, .col-4, .col-8, .col-12 { padding: 0 6px; }
+    .col-3 { width: 50% !important; }
+    .col-4, .col-8, .col-12 { width: 100% !important; }
+    .mb-4 { margin-bottom: 12px; }
+    .stat-card { padding: 14px; gap: 10px; }
+    .stat-icon { width: 40px; height: 40px; font-size: 18px; border-radius: 10px; }
+    .stat-val { font-size: 16px; }
+    .stat-label { font-size: 11px; }
+    .bento { padding: 14px; }
+    .chart-wrap { height: 200px; }
+    .modern-table th { font-size: 10px; padding: 0 6px 10px; }
+    .modern-table td { padding: 10px 6px; font-size: 12px; }
+    .cashier-av { width: 22px; height: 22px; font-size: 9px; }
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .ai-card { min-height: 280px; }
+    .chat-box { min-height: 140px; }
+}
 
 /* ================================================
    ANIMATIONS

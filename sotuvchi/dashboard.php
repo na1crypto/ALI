@@ -96,11 +96,14 @@ $products = mysqli_query($conn, "SELECT * FROM products WHERE quantity > 0 ORDER
         </div>
     </div>
 
-    <div class="right-pane">
-        
+    <div class="right-pane" id="rightPane">
+        <!-- Mobile: drawer handle + yopish tugma -->
+        <div style="background:#fff;padding:10px 16px 0;flex-shrink:0;">
+            <div class="mob-handle-bar" style="width:40px;height:4px;background:#e2e8f0;border-radius:2px;margin:0 auto 8px;"></div>
+        </div>
         <div class="cart-header">
             <div class="d-flex align-items-center">
-                <h2 class="cart-title m-0 mr-3">Savat</h2>
+                <h2 class="cart-title m-0 mr-3">🛒 Savat</h2>
                 <button class="btn btn-outline-danger font-weight-bold px-3 py-1 optom-btn" id="optomBtnBtn" onclick="toggleOptomMode()">
                     <i class="fas fa-boxes mr-1"></i> OPTOM: O'CHIQ
                 </button>
@@ -215,6 +218,15 @@ $products = mysqli_query($conn, "SELECT * FROM products WHERE quantity > 0 ORDER
         </div>
     </div>
 </div>
+
+<!-- 📱 Mobile overlay (savat yopish uchun) -->
+<div class="mob-overlay" id="mobOverlay" onclick="closeMobCart()"></div>
+
+<!-- 📱 Floating Savat tugma (faqat mobilda ko'rinadi) -->
+<button class="mob-cart-fab" id="mobCartFab" onclick="openMobCart()">
+    🛒 Savat
+    <span class="mob-fab-cnt" id="mobFabCnt">0</span>
+</button>
 
 <div class="modal fade" id="heldCartsModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -373,7 +385,11 @@ function renderCart() {
         });
     }
     $('#cartContent').html(html);
-    
+
+    // 📱 Mobile FAB yangilash
+    const fabCnt = document.getElementById('mobFabCnt');
+    if (fabCnt) fabCnt.textContent = cart.length;
+
     let discountPercent = parseFloat($('#discountInput').val()) || 0;
     if(discountPercent > 100) discountPercent = 100; if(discountPercent < 0) discountPercent = 0;
     let discountAmt = (subTotal * discountPercent) / 100;
@@ -503,6 +519,22 @@ function confirmCheckout() {
         }
     });
 }
+
+// ── 📱 Mobile: savat drawer ochish/yopish ──
+function openMobCart() {
+    document.getElementById('rightPane').classList.add('mob-open');
+    document.getElementById('mobOverlay').classList.add('open');
+    document.getElementById('mobCartFab').style.display = 'none';
+    document.body.style.overflow = 'hidden';
+}
+function closeMobCart() {
+    document.getElementById('rightPane').classList.remove('mob-open');
+    document.getElementById('mobOverlay').classList.remove('open');
+    document.getElementById('mobCartFab').style.display = '';
+    document.body.style.overflow = '';
+}
+// To'lov modal yopilganda savatni ham yop (mobile)
+$('#paymentModal').on('hidden.bs.modal', function() { closeMobCart(); });
 </script>
 </body>
 </html>

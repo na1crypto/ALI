@@ -112,13 +112,132 @@ body {
 .btn-pay-modern .pay-hotkey { background: rgba(255, 255, 255, 0.3); padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; }
 
 /* =========================================
-   MOBIL TELEFONLAR UCHUN MOSLASHUV
+   📱 MOBILE — to'liq tab-based POS
    ========================================= */
-@media (max-width: 800px) {
-    .pos-layout { flex-direction: column; overflow-y: auto; overflow-x: hidden; }
-    .left-pane { flex: none; height: 50vh; overflow: hidden; padding: 10px; }
-    .right-pane { width: 100%; flex: none; height: auto; min-height: 50vh; border-left: none; border-top: 2px solid #e2e8f0; }
-    body { overflow-y: auto; }
+@media (max-width: 768px) {
+    body { overflow: hidden; }
+
+    .pos-navbar {
+        height: 50px;
+        padding: 0 12px;
+    }
+    .logo-text { font-size: 17px; }
+
+    /* Asosiy layout: faqat chap pane ko'rinadi */
+    .pos-layout {
+        flex-direction: column;
+        height: calc(100vh - 50px);
+        overflow: hidden;
+        position: relative;
+    }
+
+    /* CHAP PANE: mahsulotlar — to'liq ekran */
+    .left-pane {
+        flex: 1;
+        width: 100%;
+        height: 100%;
+        padding: 10px 10px 80px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .search-box { height: 42px; font-size: 14px; }
+    .cat-btn { padding: 8px 14px; font-size: 12px; border-radius: 10px; }
+
+    .products-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    .product-card { height: 120px; padding: 10px; }
+    .product-card .p-name { font-size: 12px; margin-top: 14px; }
+    .product-card .p-price { font-size: 14px; }
+
+    /* O'NG PANE (savat): pastdan chiquvchi drawer */
+    .right-pane {
+        position: fixed;
+        left: 0; right: 0; bottom: 0;
+        width: 100%;
+        height: 90vh;
+        border-left: none;
+        border-top: 1px solid #e2e8f0;
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -8px 30px rgba(0,0,0,0.15);
+        transform: translateY(100%);
+        transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+        z-index: 500;
+        overflow: hidden;
+    }
+    .right-pane.mob-open {
+        transform: translateY(0);
+    }
+
+    /* Savat drawer handle */
+    .mob-drawer-handle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px 8px;
+        border-bottom: 1px solid #f1f5f9;
+        flex-shrink: 0;
+    }
+    .mob-handle-bar {
+        width: 40px; height: 4px;
+        background: #e2e8f0;
+        border-radius: 2px;
+        margin: 0 auto 8px;
+    }
+
+    .cart-header { padding: 8px 14px; }
+    .cart-title { font-size: 16px; }
+    .cart-items { padding: 8px 12px; }
+    .cart-footer { padding: 10px 12px 16px; }
+    .total-amount { font-size: 22px; }
+    .btn-pay-modern { height: 48px; }
+    .btn-pay-modern .pay-text { font-size: 15px; }
+
+    /* Floating SAVAT tugma */
+    .mob-cart-fab {
+        display: flex !important;
+    }
+
+    /* Overlay */
+    .mob-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.4);
+        z-index: 499;
+    }
+    .mob-overlay.open { display: block; }
+}
+
+/* FAB (Floating Action Button) — faqat mobildan ko'rinadi */
+.mob-cart-fab {
+    display: none;
+    position: fixed;
+    bottom: 16px; right: 16px;
+    z-index: 498;
+    background: linear-gradient(135deg, #10b981, #047857);
+    color: #fff;
+    border: none;
+    border-radius: 18px;
+    padding: 14px 20px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 8px 24px rgba(16,185,129,.45);
+    transition: transform .15s;
+}
+.mob-cart-fab:active { transform: scale(.95); }
+.mob-fab-cnt {
+    background: rgba(255,255,255,.25);
+    border-radius: 8px;
+    padding: 2px 8px;
+    font-size: 13px;
+    font-weight: 900;
 }
 
 /* =========================================
