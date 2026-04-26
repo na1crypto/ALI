@@ -159,11 +159,12 @@ if (isset($_POST['kirish'])) {
 
     /* 📱 Mobil */
     @media(max-width:480px){
-        body{ padding: 16px; align-items: flex-end; }
+        body{ padding: 20px 16px; align-items: center; justify-content: center; }
         .glass-card{
-            border-radius: 24px 24px 0 0;
-            padding: 32px 22px env(safe-area-inset-bottom, 28px);
+            border-radius: 24px;
+            padding: 32px 22px 28px;
             max-width: 100%;
+            width: 100%;
         }
         .circle-1,.circle-2{ opacity:.2; }
         .brand-text{ font-size:24px; }

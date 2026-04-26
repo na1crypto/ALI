@@ -199,10 +199,23 @@ body {
 /* ================================================
    📱 MOBILE — sidebar yashiriladi, bottom nav paydo bo'ladi
 ================================================ */
-@media(max-width:768px){
-  .app-sidebar { display:none !important; }
-  body { padding-left:0 !important; padding-bottom:68px !important; }
-  .mob-bottom-nav { display:flex !important; }
+@media screen and (max-width:768px){
+  .app-sidebar {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    pointer-events: none !important;
+  }
+  body {
+    padding-left: 0 !important;
+    padding-bottom: 68px !important;
+  }
+  .main-content, .bento-main, .page-wrapper, .page-content {
+    margin-left: 0 !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+  .mob-bottom-nav { display: flex !important; }
 }
 
 /* BOTTOM NAV */
@@ -417,6 +430,8 @@ body {
     if(!sb) return;
     var t = 'transition:margin-left 0.4s cubic-bezier(0.4,0,0.2,1),padding-left 0.4s cubic-bezier(0.4,0,0.2,1)';
     function pushContent(open){
+        // Mobilga ta'sir qilmasin
+        if (window.innerWidth <= 768) return;
         document.body.style.paddingLeft = open ? '270px' : '90px';
     }
     sb.addEventListener('mouseenter', function(){ pushContent(true); });

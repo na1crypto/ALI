@@ -169,8 +169,8 @@ body{padding-left:88px;transition:padding-left .35s cubic-bezier(.4,0,.2,1)}
 (function(){
     var sb = document.getElementById('mSidebar');
     if(!sb) return;
-    sb.addEventListener('mouseenter', function(){ document.body.style.paddingLeft='262px'; });
-    sb.addEventListener('mouseleave', function(){ document.body.style.paddingLeft='88px'; });
+    sb.addEventListener('mouseenter', function(){ if(window.innerWidth>768) document.body.style.paddingLeft='262px'; });
+    sb.addEventListener('mouseleave', function(){ if(window.innerWidth>768) document.body.style.paddingLeft='88px'; });
 })();
 </script>
 

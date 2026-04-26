@@ -139,6 +139,7 @@ $recent_orders = mysqli_query($conn, "
 <html lang="uz">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Dashboard | <?= htmlspecialchars($site_name) ?></title>
 <style>
 /* ================================================
@@ -150,7 +151,7 @@ body {
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
     background: #F4F7FE;
     color: #1B2559;
-    padding-left: 90px;
+    /* padding-left sidebar.php tomonidan boshqariladi */
     overflow-x: hidden;
     min-height: 100vh;
     transition: padding-left 0.4s cubic-bezier(0.4,0,0.2,1);
