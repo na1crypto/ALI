@@ -14,6 +14,20 @@ if (isset($_GET['logout']) && $_GET['logout'] == 'true') {
 require_once "../middleware/admin_check.php";
 require_once "../config/dokon_db.php";
 
+// AJAX: maoshni yangilash
+if (isset($_POST['action']) && $_POST['action'] === 'update_salary') {
+    header('Content-Type: application/json');
+    $uid    = (int)($_POST['user_id'] ?? 0);
+    $maosh  = max(0, (float)($_POST['salary'] ?? 0));
+    if ($uid > 0) {
+        mysqli_query($conn, "UPDATE users SET salary=$maosh WHERE id=$uid");
+        echo json_encode(['ok' => true, 'total' => mysqli_fetch_assoc(mysqli_query($conn,"SELECT COALESCE(SUM(salary),0) AS s FROM users WHERE salary>0"))['s']]);
+    } else {
+        echo json_encode(['ok' => false]);
+    }
+    exit;
+}
+
 $st_query = mysqli_query($conn, "SELECT store_name FROM settings WHERE id=1");
 $st = ($st_query && mysqli_num_rows($st_query) > 0) ? mysqli_fetch_assoc($st_query) : null;
 $site_name = $st['store_name'] ?? "SMART POS";
@@ -68,6 +82,50 @@ $bajarilgan_foiz = ($oylik_maqsad > 0)
     : 0;
 
 // ==========================================
+// MOLIYAVIY TAHLIL — FOYDA HISOBLASH
+// ==========================================
+// Migration: salary ustuni
+@mysqli_query($conn, "ALTER TABLE users ADD COLUMN IF NOT EXISTS salary DECIMAL(15,2) DEFAULT 0");
+@mysqli_query($conn, "ALTER TABLE products ADD COLUMN IF NOT EXISTS purchase_price DECIMAL(15,2) DEFAULT 0");
+
+// Oylik tushum (already: $oylik_savdo)
+
+// Tannarx (sotilgan mahsulotlar xarid narxi asosida)
+$tmp = mysqli_fetch_assoc(mysqli_query($conn,
+    "SELECT COALESCE(SUM(si.quantity * p.purchase_price),0) AS tannarx
+     FROM sale_items si
+     JOIN sales s ON si.sale_id=s.id
+     JOIN products p ON si.product_id=p.id
+     WHERE DATE_FORMAT(s.sale_date,'%Y-%m')='$current_month'"
+));
+$oylik_tannarx = (float)($tmp['tannarx'] ?? 0);
+
+// Xodimlar umumiy oylik maoshi
+$tmp2 = mysqli_fetch_assoc(mysqli_query($conn,
+    "SELECT COALESCE(SUM(salary),0) AS maosh FROM users WHERE salary > 0"
+));
+$jami_maosh = (float)($tmp2['maosh'] ?? 0);
+
+// Foyda hisoblash
+$brutto_foyda = (float)$oylik_savdo - $oylik_tannarx;
+$sof_foyda    = $brutto_foyda - $jami_maosh;
+
+// Foizlar (vizual uchun)
+$max_v = max((float)$oylik_savdo, 1);
+$tannarx_foiz = min(round($oylik_tannarx / $max_v * 100), 100);
+$maosh_foiz   = min(round($jami_maosh   / $max_v * 100), 100);
+$foyda_foiz   = max(0, min(round($brutto_foyda / $max_v * 100), 100));
+
+// Xodimlar ro'yxati (maosh boshqaruvi uchun)
+$xodimlar_q = mysqli_query($conn,
+    "SELECT id, name, username, role, COALESCE(salary,0) AS salary
+     FROM users WHERE role IN ('sotuvchi','menejer','admin','superadmin')
+     ORDER BY name ASC"
+);
+$xodimlar = [];
+if ($xodimlar_q) while ($x = mysqli_fetch_assoc($xodimlar_q)) $xodimlar[] = $x;
+
+// ==========================================
 // OXIRGI BUYURTMALAR
 // ==========================================
 $recent_orders = mysqli_query($conn, "
@@ -114,32 +172,39 @@ body {
     .col-3, .col-4, .col-8 { width: 100%; }
     body { padding-left: 0; }
 }
-/* 📱 MOBILE */
-@media (max-width: 640px) {
+/* 📱 MOBILE — 768px bilan sidebar bilan mos */
+@media (max-width: 768px) {
     body { padding-left: 0 !important; }
     .top-navbar { padding: 0 14px; height: 54px; }
-    .navbar-title { font-size: 16px; }
+    .navbar-title { font-size: 17px; }
     .navbar-sub { display: none; }
     .user-pill span { display: none; }
     .user-pill { padding: 4px 8px 4px 4px; }
-    .main-content { padding: 14px 12px 80px; }
-    .row { margin: 0 -6px; }
-    .col, .col-3, .col-4, .col-8, .col-12 { padding: 0 6px; }
+    .main-content { padding: 12px 10px 80px !important; }
+    .row { margin: 0 -5px; }
+    .col, .col-3, .col-4, .col-8, .col-12 { padding: 0 5px; }
+    /* Stat kartalar: 2 ustun */
     .col-3 { width: 50% !important; }
     .col-4, .col-8, .col-12 { width: 100% !important; }
-    .mb-4 { margin-bottom: 12px; }
-    .stat-card { padding: 14px; gap: 10px; }
-    .stat-icon { width: 40px; height: 40px; font-size: 18px; border-radius: 10px; }
-    .stat-val { font-size: 16px; }
-    .stat-label { font-size: 11px; }
-    .bento { padding: 14px; }
-    .chart-wrap { height: 200px; }
+    .mb-4 { margin-bottom: 10px; }
+    .mb-3 { margin-bottom: 8px; }
+    .stat-card { padding: 12px; gap: 10px; border-radius: 14px; }
+    .stat-icon { width: 38px; height: 38px; font-size: 17px; border-radius: 10px; }
+    .stat-val { font-size: 15px; }
+    .stat-label { font-size: 10px; }
+    .bento { padding: 14px; border-radius: 14px; }
+    .chart-wrap { height: 180px; }
     .modern-table th { font-size: 10px; padding: 0 6px 10px; }
-    .modern-table td { padding: 10px 6px; font-size: 12px; }
+    .modern-table td { padding: 9px 6px; font-size: 12px; }
     .cashier-av { width: 22px; height: 22px; font-size: 9px; }
-    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .ai-card { min-height: 280px; }
-    .chat-box { min-height: 140px; }
+    .target-box { padding: 18px; }
+    .tb-amount { font-size: 20px; }
+    .ai-card { min-height: 260px; }
+    .chat-box { min-height: 130px; }
+    /* Foyda panel */
+    .foyda-grid { grid-template-columns: 1fr !important; }
+    .foyda-schema { padding: 14px !important; }
+    .xodim-row { padding: 10px 0 !important; }
 }
 
 /* ================================================
@@ -418,6 +483,104 @@ body {
    SVG IKONKALAR (Font Awesome o'rniga)
 ================================================ */
 .ico { display: inline-block; vertical-align: middle; }
+
+/* ================================================
+   MOLIYAVIY TAHLIL PANELI
+================================================ */
+.foyda-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 20px;
+}
+/* Schema (chap tomon) */
+.foyda-schema {
+    background: #fff;
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(17,28,68,.04);
+}
+.fs-title { font-size: 16px; font-weight: 700; color: #111C44; margin-bottom: 4px; }
+.fs-sub   { font-size: 12px; color: #A3AED0; margin-bottom: 22px; }
+
+/* Har bir satr */
+.foyda-row {
+    margin-bottom: 14px;
+}
+.fr-top {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 5px;
+}
+.fr-label { font-size: 13px; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 6px; }
+.fr-dot   { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.fr-val   { font-size: 14px; font-weight: 800; color: #111C44; }
+.fr-bar   { height: 8px; border-radius: 6px; background: #F1F5F9; overflow: hidden; }
+.fr-fill  { height: 100%; border-radius: 6px; transition: width .8s ease; }
+
+/* Sof foyda katta blok */
+.sof-foyda-box {
+    margin-top: 18px;
+    border-radius: 14px;
+    padding: 16px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.sfb-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; opacity: .8; }
+.sfb-val   { font-size: 24px; font-weight: 900; letter-spacing: -1px; }
+.sfb-note  { font-size: 11px; opacity: .7; margin-top: 2px; }
+
+/* Xodimlar maoshi (o'ng tomon) */
+.xodim-panel {
+    background: #fff;
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(17,28,68,.04);
+    display: flex; flex-direction: column;
+}
+.xp-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px;
+}
+.xp-title { font-size: 15px; font-weight: 700; color: #111C44; }
+.xp-total {
+    font-size: 13px; font-weight: 800;
+    color: #4318FF;
+    background: #F0EEFF; border-radius: 8px; padding: 4px 10px;
+}
+.xodim-list { flex: 1; overflow-y: auto; max-height: 280px; }
+.xodim-list::-webkit-scrollbar { width: 3px; }
+.xodim-list::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 2px; }
+.xodim-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid #F4F7FE;
+}
+.xodim-row:last-child { border-bottom: none; }
+.xod-av {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: #F0EEFF; color: #4318FF;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 800; flex-shrink: 0;
+}
+.xod-info { flex: 1; min-width: 0; }
+.xod-name { font-size: 13px; font-weight: 700; color: #111C44; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.xod-role { font-size: 11px; color: #A3AED0; font-weight: 500; }
+.xod-salary {
+    display: flex; align-items: center; gap: 4px;
+}
+.xod-sal-inp {
+    width: 90px; text-align: right;
+    border: 1.5px solid #E2E8F0; border-radius: 8px;
+    padding: 5px 8px; font-size: 12px; font-weight: 700;
+    color: #111C44; background: #F8FAFC;
+    transition: .2s;
+}
+.xod-sal-inp:focus { outline: none; border-color: #4318FF; background: #fff; }
+.xod-sal-save {
+    width: 28px; height: 28px; border-radius: 7px;
+    background: #4318FF; color: #fff; border: none;
+    cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center;
+    transition: .15s; flex-shrink: 0;
+}
+.xod-sal-save:hover { background: #3730a3; }
+.xod-sal-save:active { transform: scale(.92); }
 </style>
 </head>
 <body>
@@ -547,6 +710,109 @@ body {
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- ══ MOLIYAVIY TAHLIL ══ -->
+    <div class="foyda-grid mb-4 fade-up d6">
+
+        <!-- CHAP: Foyda sxemasi -->
+        <div class="foyda-schema">
+            <div class="fs-title">💰 Moliyaviy Tahlil</div>
+            <div class="fs-sub"><?= date('F Y') ?> · Joriy oy natijalari</div>
+
+            <!-- Tushum -->
+            <div class="foyda-row">
+                <div class="fr-top">
+                    <span class="fr-label"><span class="fr-dot" style="background:#4318FF"></span>Umumiy Tushum</span>
+                    <span class="fr-val"><?= number_format($oylik_savdo,0,'.',' ') ?> UZS</span>
+                </div>
+                <div class="fr-bar"><div class="fr-fill" style="width:100%;background:linear-gradient(90deg,#4318FF,#7551FF)"></div></div>
+            </div>
+
+            <!-- Tannarx -->
+            <div class="foyda-row">
+                <div class="fr-top">
+                    <span class="fr-label"><span class="fr-dot" style="background:#EE5D50"></span>Tannarx (Xarid narxi)</span>
+                    <span class="fr-val" style="color:#EE5D50"><?= number_format($oylik_tannarx,0,'.',' ') ?> UZS</span>
+                </div>
+                <div class="fr-bar"><div class="fr-fill" style="width:<?= $tannarx_foiz ?>%;background:linear-gradient(90deg,#EE5D50,#FF8B7B)"></div></div>
+            </div>
+
+            <!-- Brutto foyda -->
+            <div class="foyda-row">
+                <div class="fr-top">
+                    <span class="fr-label"><span class="fr-dot" style="background:#05CD99"></span>Brutto Foyda</span>
+                    <span class="fr-val" style="color:#05CD99"><?= number_format($brutto_foyda,0,'.',' ') ?> UZS</span>
+                </div>
+                <div class="fr-bar"><div class="fr-fill" style="width:<?= $foyda_foiz ?>%;background:linear-gradient(90deg,#05CD99,#00E5B3)"></div></div>
+            </div>
+
+            <!-- Maosh -->
+            <div class="foyda-row">
+                <div class="fr-top">
+                    <span class="fr-label"><span class="fr-dot" style="background:#FFB547"></span>Xodimlar Maoshi</span>
+                    <span class="fr-val" style="color:#FFB547"><?= number_format($jami_maosh,0,'.',' ') ?> UZS</span>
+                </div>
+                <div class="fr-bar"><div class="fr-fill" style="width:<?= $maosh_foiz ?>%;background:linear-gradient(90deg,#FFB547,#FFD07A)"></div></div>
+            </div>
+
+            <!-- Sof foyda -->
+            <?php
+            $sf_pozitiv = $sof_foyda >= 0;
+            $sf_bg  = $sf_pozitiv ? 'linear-gradient(135deg,#05CD99,#00B386)' : 'linear-gradient(135deg,#EE5D50,#C84040)';
+            ?>
+            <div class="sof-foyda-box" style="background:<?= $sf_bg ?>">
+                <div>
+                    <div class="sfb-label" style="color:#fff"><?= $sf_pozitiv ? '✅ Sof Foyda' : '⚠️ Zarar' ?></div>
+                    <div class="sfb-val" style="color:#fff"><?= number_format(abs($sof_foyda),0,'.',' ') ?> UZS</div>
+                    <div class="sfb-note" style="color:rgba(255,255,255,.8)">Tushum − Tannarx − Maosh</div>
+                </div>
+                <div style="font-size:38px"><?= $sf_pozitiv ? '📈' : '📉' ?></div>
+            </div>
+
+            <?php if($oylik_tannarx == 0): ?>
+            <div style="margin-top:12px;padding:10px 14px;background:#FFF4E5;border-radius:10px;font-size:12px;color:#92400e;font-weight:600;">
+                ⚠️ Tannarx hisoblanmadi — mahsulot xarid narxini kiriting
+                (<a href="/admin/Mahsulotlar/index.php" style="color:#4318FF">Omborga o'ting</a>)
+            </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- O'NG: Xodimlar maoshi -->
+        <div class="xodim-panel">
+            <div class="xp-head">
+                <div class="xp-title">👥 Xodimlar Maoshi</div>
+                <div class="xp-total"><?= number_format($jami_maosh,0,'.',' ') ?> UZS</div>
+            </div>
+            <div class="xodim-list">
+                <?php foreach($xodimlar as $xod):
+                    $rol_colors = ['superadmin'=>'#EE5D50','admin'=>'#4318FF','menejer'=>'#FFB547','sotuvchi'=>'#05CD99'];
+                    $rc = $rol_colors[$xod['role']] ?? '#A3AED0';
+                ?>
+                <div class="xodim-row">
+                    <div class="xod-av" style="background:<?= $rc ?>22;color:<?= $rc ?>">
+                        <?= mb_strtoupper(mb_substr($xod['name'],0,1)) ?>
+                    </div>
+                    <div class="xod-info">
+                        <div class="xod-name"><?= htmlspecialchars($xod['name']) ?></div>
+                        <div class="xod-role"><?= $xod['role'] ?></div>
+                    </div>
+                    <div class="xod-salary">
+                        <input type="number" class="xod-sal-inp"
+                               id="sal_<?= $xod['id'] ?>"
+                               value="<?= (int)$xod['salary'] ?>"
+                               placeholder="0"
+                               min="0" step="50000">
+                        <button class="xod-sal-save" onclick="saveSalary(<?= $xod['id'] ?>)" title="Saqlash">✓</button>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+                <?php if(empty($xodimlar)): ?>
+                <div style="text-align:center;padding:30px;color:#A3AED0;font-size:13px;">Xodimlar topilmadi</div>
+                <?php endif; ?>
+            </div>
+        </div>
+
     </div>
 
     <!-- JADVAL + AI CHAT -->
@@ -789,6 +1055,42 @@ body {
         if (e.key === 'Enter') sendMsg();
     });
 })();
+
+// ── Xodim maoshini saqlash ──
+async function saveSalary(userId) {
+    const inp = document.getElementById('sal_' + userId);
+    const btn = inp.nextElementSibling;
+    const salary = parseFloat(inp.value) || 0;
+
+    btn.textContent = '⏳';
+    btn.disabled = true;
+
+    const fd = new FormData();
+    fd.append('action', 'update_salary');
+    fd.append('user_id', userId);
+    fd.append('salary', salary);
+
+    try {
+        const res = await fetch('', { method: 'POST', body: fd });
+        const d = await res.json();
+        if (d.ok) {
+            btn.textContent = '✅';
+            btn.style.background = '#05CD99';
+            // Jami maoshni yangilash
+            const totalEl = document.querySelector('.xp-total');
+            if (totalEl) totalEl.textContent = Number(d.total).toLocaleString('uz-UZ') + ' UZS';
+            setTimeout(() => {
+                btn.textContent = '✓';
+                btn.style.background = '';
+                btn.disabled = false;
+            }, 1500);
+        } else {
+            btn.textContent = '✕'; btn.disabled = false;
+        }
+    } catch(e) {
+        btn.textContent = '✕'; btn.disabled = false;
+    }
+}
 </script>
 
 </body>
