@@ -103,14 +103,20 @@ if ($action == 'complete_sale') {
         $sale_id = $next_sale_id;
 
         // --- 2-QADAM: `sale_items` (Ichidagi tovarlar) jadvaliga yozish ---
+        // product_name ustunini qo'shish (bir martalik migration)
+        @mysqli_query($conn, "ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS product_name VARCHAR(255) DEFAULT NULL");
+
         foreach($items as $item) {
             $p_id = (int)$item['id'];
             $qty = (int)$item['count'];
             $price = (float)$item['price'];
+            // Mahsulot nomini bazadan olish
+            $prow = mysqli_fetch_assoc(mysqli_query($conn, "SELECT name FROM products WHERE id=$p_id"));
+            $p_name_esc = mysqli_real_escape_string($conn, $prow['name'] ?? $item['name'] ?? 'Mahsulot');
 
             $next_item_id = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COALESCE(MAX(id),0)+1 AS nid FROM sale_items"))['nid'];
             $total_item_price = $price * $qty;
-            $item_query = "INSERT INTO sale_items (id, sale_id, product_id, price, quantity, unit_price) VALUES ('$next_item_id', '$sale_id', '$p_id', '$total_item_price', '$qty', '$price')";
+            $item_query = "INSERT INTO sale_items (id, sale_id, product_id, product_name, price, quantity, unit_price) VALUES ('$next_item_id', '$sale_id', '$p_id', '$p_name_esc', '$total_item_price', '$qty', '$price')";
             if (!mysqli_query($conn, $item_query)) {
                 throw new Exception("Sale_items ga yozishda muammo: " . mysqli_error($conn));
             }

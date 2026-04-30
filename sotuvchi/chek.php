@@ -12,9 +12,10 @@ $sale = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM sales WHERE id=$sa
 if (!$sale) die("Chek topilmadi!");
 
 $items = mysqli_query($conn, "
-    SELECT si.quantity, si.unit_price, p.name
+    SELECT si.quantity, si.unit_price,
+           COALESCE(NULLIF(si.product_name,''), p.name, 'Noma''lum') AS name
     FROM sale_items si
-    JOIN products p ON si.product_id = p.id
+    LEFT JOIN products p ON si.product_id = p.id
     WHERE si.sale_id = $sale_id
 ");
 

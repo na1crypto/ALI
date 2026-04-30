@@ -93,6 +93,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
   display:flex;align-items:center;justify-content:center;
   border:2px solid #fff;padding:0 2px;
 }
+.nav-right{display:flex;align-items:center;gap:8px;}
 
 /* MAIN LAYOUT */
 .layout{display:flex;flex-direction:column;height:calc(100vh - 54px);overflow:hidden;}
@@ -130,55 +131,90 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 /* BANNER */
 .banner{
   margin:8px 10px 0;
-  background:linear-gradient(135deg,#ede9fe,#dbeafe);
-  border:1px solid #c7d2fe;border-radius:10px;
-  padding:8px 12px;font-size:11px;font-weight:700;color:#4338ca;
-  display:flex;align-items:center;gap:8px;flex-shrink:0;
+  background:linear-gradient(135deg,#4f46e5,#7c3aed);
+  border-radius:12px;
+  padding:10px 14px;font-size:12px;font-weight:700;color:#fff;
+  display:flex;align-items:center;gap:10px;flex-shrink:0;
+  box-shadow:0 4px 12px rgba(79,70,229,.3);
 }
+.banner-ico{font-size:22px;flex-shrink:0;}
+.banner-txt{flex:1;}
+.banner-txt b{font-size:13px;display:block;}
 
 /* PRODUCTS GRID */
 .grid{
   flex:1;overflow-y:auto;overflow-x:hidden;
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(130px,1fr));
-  gap:8px;padding:8px 10px 20px;
+  grid-template-columns:repeat(auto-fill,minmax(145px,1fr));
+  gap:10px;padding:10px 10px 24px;
   align-content:start;
 }
 .grid::-webkit-scrollbar{width:3px;}
 .grid::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:4px;}
 
-/* PRODUCT CARD — eski chiroyli dizayn */
+/* PRODUCT CARD */
 .pcard{
-  background:#fff;border-radius:14px;
-  border:2px solid var(--border);
-  padding:10px 10px 10px;
+  background:#fff;border-radius:16px;
+  border:1.5px solid var(--border);
+  padding:0;
   cursor:pointer;position:relative;
-  transition:.15s;
+  transition:.18s;
   display:flex;flex-direction:column;
-  justify-content:space-between;
-  min-height:110px;
-  box-shadow:0 2px 6px rgba(0,0,0,.04);
+  overflow:hidden;
+  box-shadow:0 2px 8px rgba(0,0,0,.05);
 }
-.pcard:active{transform:scale(.95);background:#f8fafc;}
-.pcard.in-cart{border-color:var(--primary);background:#fafafe;}
-.stock-badge{
-  position:absolute;top:8px;right:8px;
-  font-size:10px;font-weight:700;
-  background:#f1f5f9;color:var(--muted);
-  padding:2px 7px;border-radius:20px;
+.pcard:active{transform:scale(.95);}
+.pcard.in-cart{border-color:var(--primary);box-shadow:0 4px 14px rgba(79,70,229,.18);}
+/* Rangli ust chiziq */
+.pcard-top{
+  height:5px;
+  background:var(--clr,var(--primary));
+  flex-shrink:0;
 }
-.stock-badge.low{background:#fff7ed;color:#f59e0b;}
+.pcard-body{padding:10px 10px 10px;}
+/* Kategoriya tegi */
+.cat-tag{
+  display:inline-flex;align-items:center;
+  background:rgba(255,255,255,.85);
+  color:var(--clr,var(--primary));
+  border:1px solid;
+  border-color:color-mix(in srgb,var(--clr,var(--primary)) 35%,transparent);
+  font-size:10px;font-weight:800;
+  padding:2px 8px;border-radius:20px;
+  margin-bottom:6px;max-width:100%;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
 .pname{
   font-weight:700;font-size:13px;color:var(--dark);
-  line-height:1.3;margin-top:16px;
+  line-height:1.35;
   overflow:hidden;display:-webkit-box;
   -webkit-line-clamp:2;-webkit-box-orient:vertical;
+  min-height:36px;
 }
-.pprice{font-size:15px;font-weight:900;color:var(--primary);margin-top:6px;}
-.punit{font-size:10px;color:var(--muted);font-weight:600;}
-.pminq{font-size:10px;color:#f59e0b;font-weight:700;margin-top:3px;}
+.pcard-bot{
+  display:flex;align-items:flex-end;justify-content:space-between;
+  margin-top:8px;
+}
+.pprice{font-size:15px;font-weight:900;color:var(--dark);line-height:1.1;}
+.puzs{font-size:10px;font-weight:700;color:var(--muted);}
+.pminq{font-size:10px;color:#f59e0b;font-weight:700;margin-top:2px;}
+.padd-ico{
+  width:30px;height:30px;border-radius:10px;
+  background:var(--clr,var(--primary));
+  color:#fff;font-size:20px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:.15s;line-height:1;
+}
+.pcard.in-cart .padd-ico{background:var(--green);content:'✓';}
+.stk-lbl{
+  position:absolute;top:12px;right:8px;
+  font-size:9px;font-weight:800;
+  background:#f1f5f9;color:var(--muted);
+  padding:2px 6px;border-radius:10px;
+}
+.stk-lbl.low{background:#fff7ed;color:#f59e0b;}
 
-/* FLOATING CART BAR — o'ng pastda */
+/* FLOATING CART BAR — desktop: o'ngda */
 .cart-bar{
   position:fixed;bottom:16px;right:16px;
   z-index:100;transition:opacity .25s;width:280px;
@@ -189,6 +225,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
   display:flex;align-items:center;justify-content:space-between;
   box-shadow:0 8px 24px rgba(79,70,229,.45);
   cursor:pointer;transition:.15s;border:none;width:100%;
+  position:relative;
 }
 .cart-bar-btn:active{transform:scale(.97);}
 .cart-bar-btn.empty{background:linear-gradient(135deg,#94a3b8,#64748b);box-shadow:0 3px 8px rgba(0,0,0,.15);}
@@ -197,6 +234,18 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 .cb-lbl{font-size:13px;font-weight:700;color:rgba(255,255,255,.9);}
 .cb-total{font-size:14px;font-weight:900;color:#fff;}
 .cb-arrow{font-size:18px;color:rgba(255,255,255,.7);margin-left:4px;}
+/* Mobil FAB elementlari — desktop da yashirin */
+.fab-ico{display:none;font-size:26px;line-height:1;}
+.fab-num{
+  display:none;
+  position:absolute;top:-4px;right:-4px;
+  background:var(--red);color:#fff;
+  font-size:11px;font-weight:900;
+  min-width:20px;height:20px;border-radius:999px;
+  align-items:center;justify-content:center;
+  border:2.5px solid #fff;padding:0 3px;
+}
+.fab-num:empty{display:none!important;}
 
 /* OVERLAY */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;opacity:0;pointer-events:none;transition:.3s;}
@@ -266,6 +315,18 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 .contact-inp:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(79,70,229,.1);}
 .contact-inp::placeholder{color:#94a3b8;font-weight:500;font-size:13px;}
 
+/* To'lov usuli tanlash */
+.pay-pick{display:flex;gap:8px;margin-bottom:10px;}
+.pay-opt{
+  flex:1;padding:10px 8px;border-radius:12px;
+  border:2px solid var(--border);
+  background:#f8fafc;cursor:pointer;
+  text-align:center;font-size:13px;font-weight:700;color:var(--muted);
+  transition:.15s;
+}
+.pay-opt.sel{border-color:var(--primary);background:#eef2ff;color:var(--primary);}
+.pay-opt span{display:block;font-size:18px;margin-bottom:2px;}
+
 /* Delivery */
 .deliv-box{
   background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;
@@ -332,52 +393,65 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
   /* NAVBAR: ixchamroq */
   .navbar{ height:52px; padding:0 10px; }
   .logo{ font-size:16px; }
-  .user-badge span{ display:none; } /* Faqat avatar */
-  .user-badge{ padding:4px 8px 4px 4px; }
+  .user-badge span{ display:none; }
+  .user-badge{ padding:4px; border-radius:50%; width:32px; height:32px; justify-content:center; }
 
   /* "Buyurtmalarim" matni qisqaroq */
   button[onclick="openOrders()"]{ padding:5px 8px; font-size:11px; }
 
-  /* KATEGORIYALAR: kichikroq, ammo bosib bo'ladigan */
+  /* KATEGORIYALAR */
   .cats-bar{ padding:6px 8px; gap:5px; }
   .scat{ padding:8px 12px; font-size:12px; border-radius:16px; }
 
-  /* MAIN LAYOUT: to'liq balandlik */
+  /* MAIN LAYOUT */
   .layout{ height:calc(100vh - 52px); }
 
   /* QIDIRUV */
   .search-wrap{ padding:6px 8px; }
   .search-box{ height:38px; font-size:14px; }
 
-  /* BANNER: kichik */
-  .banner{ margin:6px 8px 0; padding:7px 10px; font-size:11px; }
+  /* BANNER */
+  .banner{ margin:6px 8px 0; padding:8px 10px; font-size:11px; }
+  .banner-txt b{ font-size:11px; }
 
-  /* TOVAR GRID: 2 ustun, compact */
+  /* TOVAR GRID: 2 ustun */
   .grid{
     grid-template-columns: repeat(2, 1fr);
     gap:8px;
-    padding:8px 8px 90px;
+    padding:8px 8px 16px;
   }
 
-  /* TOVAR KARTOCHKA: kompakt, qulay */
-  .pcard{ border-radius:14px; min-height:100px; }
-  .pname{ font-size:13px; }
+  /* TOVAR KARTOCHKA */
+  .pcard{ border-radius:14px; }
+  .pcard-body{ padding:8px 8px 8px; }
+  .pname{ font-size:12px; min-height:32px; }
   .pprice{ font-size:14px; }
+  .padd-ico{ width:26px; height:26px; font-size:18px; border-radius:8px; }
+  .cat-tag{ font-size:9px; }
 
-  /* SAVAT TUGMA: pastda to'liq kenglik (native app kabi) */
+  /* ── SAVAT FAB: o'ng tomonda yuvarlangan tugma ── */
   .cart-bar{
-    left:0; right:0; bottom:0; width:100%;
-    padding:8px 12px env(safe-area-inset-bottom, 10px);
-    background:linear-gradient(to top, var(--bg) 85%, transparent);
-    border-radius:0;
+    right:16px; bottom:28px;
+    left:auto; width:auto;
+    padding:0; background:transparent;
   }
   .cart-bar-btn{
-    border-radius:14px;
-    padding:14px 18px;
-    font-size:14px;
+    width:62px; height:62px;
+    border-radius:50%;
+    padding:0;
+    justify-content:center; align-items:center;
+    box-shadow:0 6px 22px rgba(79,70,229,.55);
   }
-  .cb-lbl{ font-size:14px; }
-  .cb-total{ font-size:15px; }
+  .cart-bar-btn.empty{
+    box-shadow:0 4px 14px rgba(0,0,0,.22);
+  }
+  /* Desktop elementlarini yashir */
+  .cb-left{ display:none!important; }
+  .cb-total{ display:none!important; }
+  .cb-arrow{ display:none!important; }
+  /* Mobil FAB ikonkasini ko'rsat */
+  .fab-ico{ display:flex; }
+  .fab-num{ display:flex; }
 
   /* DRAWER: to'liq ekran */
   .drawer{ width:100%; border-radius:0; }
@@ -439,7 +513,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
       <div class="user-av"><?= mb_strtoupper(mb_substr($ism,0,1)) ?></div>
       <span><?= htmlspecialchars($ism) ?></span>
     </div>
-    <a href="/auth/logout.php" class="logout-btn" title="Chiqish">⏻</a>
+    <a href="/auth/logout.php" class="logout-btn" title="Chiqish"
+       onclick="return confirm('Tizimdan chiqasizmi?')">⏻</a>
   </div>
 </div>
 
@@ -464,7 +539,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
     </div>
 
     <div class="banner">
-      🚚 <span>1 500 000 UZS dan yuqori buyurtmada <b>BEPUL yetkazish!</b></span>
+      <span class="banner-ico">🚚</span>
+      <div class="banner-txt">
+        <b>1 500 000 UZS dan yuqori buyurtmada BEPUL yetkazish!</b>
+        <span style="opacity:.85;font-size:11px;">Tez va ishonchli xizmat</span>
+      </div>
     </div>
 
     <!-- MAHSULOTLAR -->
@@ -492,13 +571,28 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
            data-minq="<?= $minQ ?>"
            data-unit="<?= htmlspecialchars($unit) ?>"
            data-stock="<?= $qty ?>"
-           onclick="addToCart(this)">
-        <span class="stock-badge <?= $qty<=0?'empty':($lowStock?'low':'') ?>">
-          <?= $qty <= 0 ? 'Tugagan' : $qty.' '.$unit ?>
-        </span>
-        <div class="pname"><?= htmlspecialchars($p['name']) ?></div>
-        <div class="pprice"><?= number_format($dispPrice,0,'.',' ') ?> <span style="font-size:11px;font-weight:700">UZS</span></div>
-        <?php if($minQ>1): ?><div class="pminq">min <?= $minQ ?></div><?php endif; ?>
+           onclick="addToCart(this)"
+           style="--clr:<?= $clr ?>">
+        <!-- Rangli top bar -->
+        <div class="pcard-top"></div>
+        <!-- Zaxira belgisi -->
+        <span class="stk-lbl <?= $lowStock?'low':'' ?>"><?= $qty <= 0 ? '❌' : $qty.' '.$unit ?></span>
+        <div class="pcard-body">
+          <!-- Kategoriya -->
+          <?php if($p['kategoriya']): ?>
+          <div class="cat-tag"><?= htmlspecialchars($p['kategoriya']) ?></div>
+          <?php endif; ?>
+          <!-- Nomi -->
+          <div class="pname"><?= htmlspecialchars($p['name']) ?></div>
+          <!-- Narx + qo'shish tugmasi -->
+          <div class="pcard-bot">
+            <div>
+              <div class="pprice"><?= number_format($dispPrice,0,'.',' ') ?> <span class="puzs">UZS</span></div>
+              <?php if($minQ>1): ?><div class="pminq">min <?= $minQ ?> <?= $unit ?></div><?php endif; ?>
+            </div>
+            <div class="padd-ico">+</div>
+          </div>
+        </div>
       </div>
       <?php endforeach; ?>
     </div>
@@ -513,6 +607,10 @@ $cbSum   = $cartCount ? number_format($cartTotal,0,'.',' ').' UZS' : '';
 ?>
 <div class="cart-bar" id="cartBar">
   <button class="cart-bar-btn <?= $cbEmpty?'empty':'' ?>" onclick="openDrawer()">
+    <!-- Mobil FAB uchun -->
+    <span class="fab-ico">🛒</span>
+    <span class="fab-num" id="fabNum"><?= $cartCount ?: '' ?></span>
+    <!-- Desktop uchun -->
     <div class="cb-left">
       <div class="cb-cnt" id="cbCnt">🛒 <?= $cartCount ?></div>
       <div class="cb-lbl" id="cbLbl"><?= htmlspecialchars($cbLabel) ?></div>
@@ -542,6 +640,15 @@ $cbSum   = $cartCount ? number_format($cartTotal,0,'.',' ').' UZS' : '';
     <div class="cftotal">
       <span class="cftotal-lbl">JAMI</span>
       <span class="cftotal-val" id="cfTotal">0</span>
+    </div>
+    <!-- To'lov usuli -->
+    <div class="pay-pick">
+      <div class="pay-opt sel" id="payNaqd" onclick="pickPay('naqd')">
+        <span>💵</span>Naqd pul
+      </div>
+      <div class="pay-opt" id="payKarta" onclick="pickPay('karta')">
+        <span>💳</span>Karta
+      </div>
     </div>
     <!-- Telefon + Manzil (yonma-yon, katta) -->
     <div class="contact-row">
@@ -652,9 +759,12 @@ function addToCart(card) {
 function flashCard(card, color) {
   if(color==='green'){
     card.classList.add('in-cart');
+    const ico = card.querySelector('.padd-ico');
+    if(ico){ ico.textContent='✓'; setTimeout(()=>{ if(cart[parseInt(card.dataset.id)]) ico.textContent='✓'; else ico.textContent='+'; },600); }
   } else {
     card.style.borderColor='var(--red)';
-    setTimeout(()=>card.style.borderColor='',700);
+    const ico = card.querySelector('.padd-ico');
+    if(ico){ ico.textContent='!'; setTimeout(()=>{ ico.textContent='+'; card.style.borderColor=''; },700); }
   }
 }
 
@@ -662,8 +772,14 @@ function flashCard(card, color) {
 function markCartCards(){
   document.querySelectorAll('.pcard').forEach(c=>{
     const id = parseInt(c.dataset.id);
-    if(cart[id]) c.classList.add('in-cart');
-    else c.classList.remove('in-cart');
+    const ico = c.querySelector('.padd-ico');
+    if(cart[id]){
+      c.classList.add('in-cart');
+      if(ico) ico.textContent='✓';
+    } else {
+      c.classList.remove('in-cart');
+      if(ico) ico.textContent='+';
+    }
   });
 }
 
@@ -690,6 +806,9 @@ function updateUI() {
   // Floating bar
   const barBtn = document.querySelector('.cart-bar-btn');
   document.getElementById('cbCnt').textContent = '🛒 ' + totalQty;
+  // Mobil FAB badge
+  const fabNum = document.getElementById('fabNum');
+  if(fabNum) fabNum.textContent = totalQty > 0 ? totalQty : '';
   if (totalQty > 0) {
     barBtn.classList.remove('empty');
     document.getElementById('cbLbl').textContent  = totalQty + ' ta mahsulot';
@@ -792,6 +911,14 @@ function toggleDeliv() {
   }
 }
 
+let selectedPayMethod = 'naqd'; // default
+
+function pickPay(method) {
+  selectedPayMethod = method;
+  document.getElementById('payNaqd').classList.toggle('sel', method === 'naqd');
+  document.getElementById('payKarta').classList.toggle('sel', method === 'karta');
+}
+
 async function checkout() {
   const btn      = document.getElementById('checkoutBtn');
   const phone    = document.getElementById('phoneInp').value.trim();
@@ -807,9 +934,10 @@ async function checkout() {
 
   btn.disabled = true; btn.textContent = '⏳ Yuborilmoqda...';
   const fd = new FormData();
-  fd.append('phone',     phone);
-  fd.append('manzil',   address);
-  fd.append('yetkazish', yetkazish);
+  fd.append('phone',          phone);
+  fd.append('manzil',         address);
+  fd.append('yetkazish',      yetkazish);
+  fd.append('payment_method', selectedPayMethod);
 
   const res = await fetch('/mijoz/api.php?action=checkout',{method:'POST',body:fd});
   const d   = await res.json();

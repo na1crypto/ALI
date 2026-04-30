@@ -48,8 +48,17 @@ if (mysqli_num_rows($result) > 0) {
         // Zaxira ko'rsatkichi (5 tadan kam qolsa qizil bo'ladi)
         $stock_class = ($row['quantity'] <= 5) ? 'color: #EF4444; font-weight: 800;' : 'color: #0F172A; font-weight: 700;';
         
-        // Muddati
-        $expiry = !empty($row['expiry_date']) ? date('d.m.Y', strtotime($row['expiry_date'])) : '<span style="color:#94A3B8; font-size:12px; font-weight:500;">Muddatsiz</span>';
+        // Muddati — rang bilan (tugayotgan bo'lsa sariq/qizil)
+        if (!empty($row['expiry_date'])) {
+            $exp_ts    = strtotime($row['expiry_date']);
+            $days_left = (int)(($exp_ts - time()) / 86400);
+            $exp_str   = date('d.m.Y', $exp_ts);
+            if ($days_left < 0)       $expiry = '<span style="color:#ef4444;font-weight:800;">❌ '.$exp_str.' (tugagan)</span>';
+            elseif ($days_left <= 10) $expiry = '<span style="color:#f59e0b;font-weight:800;">⚠️ '.$exp_str.' ('.$days_left.' kun)</span>';
+            else                      $expiry = '<span style="color:#475569;font-weight:600;">'.$exp_str.'</span>';
+        } else {
+            $expiry = '<span style="color:#94A3B8;font-size:12px;font-weight:500;">—</span>';
+        }
         
         // Bo'sh kelishi mumkin bo'lgan qiymatlar
         $unit = $row['unit'] ?? 'dona';

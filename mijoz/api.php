@@ -142,11 +142,14 @@ if ($action === 'get_cart') {
 
 // ── Buyurtma berish ──
 if ($action === 'checkout') {
-    $cart      = $_SESSION['cart'] ?? [];
-    $yetkazish = (int)($_POST['yetkazish'] ?? 0);
-    $manzil    = mysqli_real_escape_string($conn, trim($_POST['manzil'] ?? ''));
-    $phone     = mysqli_real_escape_string($conn, trim($_POST['phone']  ?? ''));
-    $izoh      = mysqli_real_escape_string($conn, trim($_POST['izoh']   ?? ''));
+    $cart          = $_SESSION['cart'] ?? [];
+    $yetkazish     = (int)($_POST['yetkazish'] ?? 0);
+    $manzil        = mysqli_real_escape_string($conn, trim($_POST['manzil'] ?? ''));
+    $phone         = mysqli_real_escape_string($conn, trim($_POST['phone']  ?? ''));
+    $izoh          = mysqli_real_escape_string($conn, trim($_POST['izoh']   ?? ''));
+    $pay_method_in = trim($_POST['payment_method'] ?? 'online');
+    $allowed_pays  = ['naqd','karta','online'];
+    $payment_method_val = in_array($pay_method_in, $allowed_pays) ? $pay_method_in : 'online';
 
     if (empty($cart)) {
         echo json_encode(['status'=>'error','message'=>'Savat bo\'sh!']); exit;
@@ -177,23 +180,27 @@ if ($action === 'checkout') {
         $new_sid = (int)$nid_r['nid'];
 
         $sql_sale = "INSERT INTO sales (id, user_id, customer_id, total_price, payment_method, sale_type, note, status, source)
-                     VALUES ($new_sid, $user_id, NULL, $final, 'online', '$sale_type', '$note_esc', 'yangi', 'mijoz')";
+                     VALUES ($new_sid, $user_id, NULL, $final, '$payment_method_val', '$sale_type', '$note_esc', 'yangi', 'mijoz')";
         if (!mysqli_query($conn, $sql_sale)) {
             throw new Exception("Buyurtma yozilmadi: " . mysqli_error($conn));
         }
         $sale_id = $new_sid;
+
+        // product_name ustunini qo'shish (bir martalik migration)
+        @mysqli_query($conn, "ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS product_name VARCHAR(255) DEFAULT NULL");
 
         // sale_items uchun ham MAX(id)+1
         $si_nid_r = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COALESCE(MAX(id),0)+1 AS nid FROM sale_items"));
         $si_id    = (int)$si_nid_r['nid'];
 
         foreach ($cart as $item) {
-            $p  = (int)$item['id'];
-            $q  = (int)$item['qty'];
-            $pr = (float)$item['price'];
-            $ti = $pr * $q;
-            $sql_item = "INSERT INTO sale_items (id, sale_id, product_id, quantity, unit_price, price)
-                         VALUES ($si_id, $sale_id, $p, $q, $pr, $ti)";
+            $p       = (int)$item['id'];
+            $q       = (int)$item['qty'];
+            $pr      = (float)$item['price'];
+            $ti      = $pr * $q;
+            $pname_e = mysqli_real_escape_string($conn, $item['name'] ?? 'Mahsulot');
+            $sql_item = "INSERT INTO sale_items (id, sale_id, product_id, product_name, quantity, unit_price, price)
+                         VALUES ($si_id, $sale_id, $p, '$pname_e', $q, $pr, $ti)";
             if (!mysqli_query($conn, $sql_item)) {
                 throw new Exception("Mahsulot yozilmadi: " . mysqli_error($conn));
             }

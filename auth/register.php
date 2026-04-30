@@ -208,7 +208,7 @@ label{display:block;font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:7
 function toggleEye(id, eid) {
   const inp = document.getElementById(id);
   const ico = document.getElementById(eid);
-  if (inp.type === 'password') { inp.type = 'text'; ico.textContent = '🙈'; }
+  if (inp.type === 'password') { inp.type = 'text'; ico.textContent = '🔓'; }
   else { inp.type = 'password'; ico.textContent = '👁'; }
 }
 </script>

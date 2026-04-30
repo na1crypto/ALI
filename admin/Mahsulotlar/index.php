@@ -20,6 +20,7 @@ if (isset($_POST['saqlash'])) {
     $unit = mysqli_real_escape_string($conn, $_POST['unit']);
     $min_qty = max(1, (int)($_POST['min_qty'] ?? 1));
     $expiry_date = !empty($_POST['expiry_date']) ? "'" . mysqli_real_escape_string($conn, $_POST['expiry_date']) . "'" : "NULL";
+    $manufacture_date = !empty($_POST['manufacture_date']) ? "'" . mysqli_real_escape_string($conn, $_POST['manufacture_date']) . "'" : "NULL";
 
     // Kategoriya mantiqi (Yangi qo'shildimi yoki eskisi tanlandimi?)
     $category_id_post = $_POST['category_id'];
@@ -42,6 +43,7 @@ if (isset($_POST['saqlash'])) {
     // Avval ustunlarni qo'shish (bir martalik migration)
     @mysqli_query($conn, "ALTER TABLE products ADD COLUMN IF NOT EXISTS min_qty INT NOT NULL DEFAULT 1");
     @mysqli_query($conn, "ALTER TABLE products ADD COLUMN IF NOT EXISTS image MEDIUMTEXT DEFAULT NULL");
+    @mysqli_query($conn, "ALTER TABLE products ADD COLUMN IF NOT EXISTS manufacture_date DATE DEFAULT NULL");
 
     // Rasm qayta ishlash (base64 → DB)
     $image_sql = 'NULL';
@@ -55,10 +57,22 @@ if (isset($_POST['saqlash'])) {
         }
     }
 
-    $sql = "INSERT INTO products (barcode, category_id, name, purchase_price, optom_price, price, quantity, unit, min_qty, image, expiry_date)
-            VALUES ('$barcode', '$category_id', '$name', '$purchase_price', '$optom_price', '$price', '$quantity', '$unit', '$min_qty', $image_sql, $expiry_date)";
+    // 1-urinish: id siz (AUTO_INCREMENT bo'lsa ishlaydi)
+    $sql = "INSERT INTO products (barcode, category_id, name, purchase_price, optom_price, price, quantity, unit, min_qty, image, manufacture_date, expiry_date)
+            VALUES ('$barcode', '$category_id', '$name', '$purchase_price', '$optom_price', '$price', '$quantity', '$unit', '$min_qty', $image_sql, $manufacture_date, $expiry_date)";
 
-    if (mysqli_query($conn, $sql)) {
+    $ok = mysqli_query($conn, $sql);
+
+    // 2-urinish: TiDB uchun COALESCE(MAX(id),0)+1
+    if (!$ok) {
+        $nid_r = mysqli_query($conn, "SELECT COALESCE(MAX(id),0)+1 AS nid FROM products");
+        $nid = $nid_r ? (int)mysqli_fetch_assoc($nid_r)['nid'] : 1;
+        $sql2 = "INSERT INTO products (id, barcode, category_id, name, purchase_price, optom_price, price, quantity, unit, min_qty, image, manufacture_date, expiry_date)
+                 VALUES ($nid, '$barcode', '$category_id', '$name', '$purchase_price', '$optom_price', '$price', '$quantity', '$unit', '$min_qty', $image_sql, $manufacture_date, $expiry_date)";
+        $ok = mysqli_query($conn, $sql2);
+    }
+
+    if ($ok) {
         echo "<script>alert('Mahsulot muvaffaqiyatli saqlandi!'); window.location.href='index.php';</script>";
         exit;
     } else {
@@ -248,50 +262,58 @@ while($c = mysqli_fetch_assoc($cats_query)) {
                     <button type="button" class="close text-muted" data-dismiss="modal" style="border:none; background:none; font-size:24px;">&times;</button>
                 </div>
                 
-                <form action="" method="POST" enctype="multipart/form-data">
+                <form action="" method="POST" enctype="multipart/form-data" id="addProdForm">
                     <div class="modal-body">
+                        <?php if(empty($categories)): ?>
+                        <div class="alert alert-warning mb-3" style="border-radius:10px;font-weight:600;">
+                            ⚠️ Kategoriya yo'q! Avval "<b>Yangi Kategoriya Ochish</b>" tanlang yoki <a href="/admin/seed_products.php" style="color:#d97706;">seed skriptni ishga tushiring</a>.
+                        </div>
+                        <?php endif; ?>
                         <div class="row">
-                            <div class="col-md-6">
-                                <label class="bento-label">Shtrix-kod</label>
-                                <input type="text" name="barcode" class="bento-input-modal" placeholder="Skanerlang..." required>
-                            </div>
-                            
-                            <div class="col-md-6">
+                            <!-- Kategoriya -->
+                            <div class="col-md-7">
                                 <label class="bento-label">Kategoriya</label>
                                 <select name="category_id" id="catSelect" class="bento-input-modal" onchange="checkNewCategory(this)" required>
                                     <option value="" disabled selected>-- Tanlang --</option>
-                                    <option value="new" style="font-weight: 800; color: #4F46E5;">➕ Yangi Kategoriya Ochish</option>
+                                    <option value="new" style="font-weight:800;color:#4F46E5;">➕ Yangi Kategoriya Ochish</option>
                                     <?php foreach($categories as $c): ?>
                                         <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['name']) ?></option>
                                     <?php endforeach; ?>
                                 </select>
-                                <input type="text" name="new_category_name" id="newCatInput" class="bento-input-modal mt-2" placeholder="Yangi kategoriya nomini yozing..." style="display: none; border-color: #4F46E5; background: #EEF2FF;">
+                                <input type="text" name="new_category_name" id="newCatInput" class="bento-input-modal mt-2"
+                                       placeholder="Yangi kategoriya nomini yozing..."
+                                       style="display:none;border-color:#4F46E5;background:#EEF2FF;">
                             </div>
-                            
+                            <!-- Barcode -->
+                            <div class="col-md-5">
+                                <label class="bento-label">Shtrix-kod <span class="text-muted font-weight-normal">(Ixtiyoriy)</span></label>
+                                <input type="text" name="barcode" class="bento-input-modal" placeholder="Skanerlang yoki bo'sh qoldiring">
+                            </div>
+                            <!-- Nomi -->
                             <div class="col-md-12">
-                                <label class="bento-label">Mahsulot Nomi</label>
-                                <input type="text" name="name" class="bento-input-modal" placeholder="Masalan: Fanta 1L" required>
+                                <label class="bento-label">Mahsulot Nomi *</label>
+                                <input type="text" name="name" class="bento-input-modal" placeholder="Masalan: Coca-Cola 1L" required>
                             </div>
-                            
+                            <!-- Narxlar -->
                             <div class="col-md-4">
-                                <label class="bento-label">Kelish Narxi</label>
-                                <input type="number" name="purchase_price" class="bento-input-modal" placeholder="0" required>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="bento-label">Ulgurji (Optom)</label>
-                                <input type="number" name="optom_price" class="bento-input-modal" placeholder="0">
+                                <label class="bento-label">Kelish narxi</label>
+                                <input type="number" name="purchase_price" class="bento-input-modal" placeholder="0" value="0" min="0">
                             </div>
                             <div class="col-md-4">
-                                <label class="bento-label" style="color: #10B981;">Sotuv (Dona)</label>
-                                <input type="number" name="price" class="bento-input-modal" style="border-color: #10B981;" placeholder="0" required>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <label class="bento-label">Qabul Soni</label>
-                                <input type="number" step="0.001" name="quantity" class="bento-input-modal" value="1" required>
+                                <label class="bento-label">Optom narxi</label>
+                                <input type="number" name="optom_price" class="bento-input-modal" placeholder="0" value="0" min="0">
                             </div>
                             <div class="col-md-4">
-                                <label class="bento-label">O'lchovi</label>
+                                <label class="bento-label" style="color:#10B981;">💰 Sotuv narxi *</label>
+                                <input type="number" name="price" class="bento-input-modal" style="border-color:#10B981;" placeholder="0" required min="1">
+                            </div>
+                            <!-- Zaxira -->
+                            <div class="col-md-4">
+                                <label class="bento-label">Zaxira soni *</label>
+                                <input type="number" step="0.001" name="quantity" class="bento-input-modal" value="1" min="0" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="bento-label">O'lchov birligi</label>
                                 <select name="unit" class="bento-input-modal">
                                     <option value="dona">Dona</option>
                                     <option value="kg">Kg</option>
@@ -301,24 +323,46 @@ while($c = mysqli_fetch_assoc($cats_query)) {
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label class="bento-label">Min. buyurtma <span class="text-muted font-weight-normal">(dona/blok)</span></label>
+                                <label class="bento-label">Min. buyurtma</label>
                                 <input type="number" name="min_qty" class="bento-input-modal" value="1" min="1" placeholder="1">
                             </div>
-                            <div class="col-md-4">
-                                <label class="bento-label">Yaroqlilik <span class="text-muted font-weight-normal">(Ixtiyoriy)</span></label>
-                                <input type="date" name="expiry_date" class="bento-input-modal">
-                            </div>
+
+                            <!-- Muddat bo'limi -->
                             <div class="col-md-12">
-                                <label class="bento-label">📷 Mahsulot rasmi <span class="text-muted font-weight-normal">(Ixtiyoriy, max 2MB)</span></label>
+                                <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px;margin-bottom:4px;">
+                                    <div style="font-size:12px;font-weight:800;color:#475569;text-transform:uppercase;margin-bottom:10px;">📅 Yaroqlilik muddati</div>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label class="bento-label">Chiqarilgan sana</label>
+                                            <input type="date" name="manufacture_date" id="mfDate" class="bento-input-modal" oninput="calcExpiry()">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="bento-label">Saqlash muddati <span style="color:#f59e0b">(kun)</span></label>
+                                            <input type="number" name="shelf_days" id="shelfDays" class="bento-input-modal"
+                                                   placeholder="Masalan: 365" min="1" oninput="calcExpiry()">
+                                            <div style="font-size:11px;color:#94a3b8;margin-top:3px;">1 yil=365, 6 oy=180, 30 kun=30</div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="bento-label" style="color:#ef4444;">Tugash sanasi</label>
+                                            <input type="date" name="expiry_date" id="expDate" class="bento-input-modal" style="border-color:#ef4444;">
+                                            <div style="font-size:11px;color:#94a3b8;margin-top:3px;">Avtomatik yoki qo'lda</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Rasm -->
+                            <div class="col-md-12">
+                                <label class="bento-label">📷 Rasm <span class="text-muted font-weight-normal">(Ixtiyoriy, max 2MB)</span></label>
                                 <input type="file" name="image" accept="image/*" class="bento-input-modal" style="padding:8px;"
                                        onchange="previewImg(this,'prev_new')">
                                 <img id="prev_new" src="" style="display:none;max-height:80px;border-radius:10px;margin-top:8px;object-fit:cover;">
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="modal-footer d-flex justify-content-between">
-                        <button type="button" class="btn btn-light" data-dismiss="modal" style="border-radius: 10px; font-weight: 600;">Bekor qilish</button>
+                        <button type="button" class="btn btn-light" data-dismiss="modal" style="border-radius:10px;font-weight:600;">Bekor qilish</button>
                         <button type="submit" name="saqlash" class="btn-submit"><i class="fas fa-save mr-2"></i> Bazaga Yozish</button>
                     </div>
                 </form>
@@ -376,10 +420,7 @@ while($c = mysqli_fetch_assoc($cats_query)) {
             load_data();
         });
 
-        // Modal ochilganda avtomat Shtrix-kodga tayyor turadi
-        $('#addProductModal').on('shown.bs.modal', function () {
-            $('input[name="barcode"]').trigger('focus');
-        });
+        // (Modal shown handler quyida JS blokida)
     });
 
     function previewImg(input, previewId) {
@@ -390,6 +431,30 @@ while($c = mysqli_fetch_assoc($cats_query)) {
             reader.readAsDataURL(input.files[0]);
         }
     }
+
+    // Chiqarilgan sana + kun → tugash sanasini avtomatik hisoblash
+    function calcExpiry() {
+        const mfVal   = document.getElementById('mfDate').value;
+        const days    = parseInt(document.getElementById('shelfDays').value) || 0;
+        const expInp  = document.getElementById('expDate');
+        if (!mfVal || days < 1) return; // ikkalasi to'ldirilganda ishlaydi
+        const mfDate  = new Date(mfVal);
+        mfDate.setDate(mfDate.getDate() + days);
+        // YYYY-MM-DD formatiga o'tkazish
+        const y = mfDate.getFullYear();
+        const m = String(mfDate.getMonth()+1).padStart(2,'0');
+        const d = String(mfDate.getDate()).padStart(2,'0');
+        expInp.value = `${y}-${m}-${d}`;
+    }
+
+    // Modal ochilganda bugun sanasini manufacture_date ga qo'yish
+    $('#addProductModal').on('shown.bs.modal', function () {
+        $('input[name="barcode"]').trigger('focus');
+        const today = new Date().toISOString().split('T')[0];
+        if (!document.getElementById('mfDate').value) {
+            document.getElementById('mfDate').value = today;
+        }
+    });
 </script>
 
 </body>

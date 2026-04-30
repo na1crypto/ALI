@@ -42,14 +42,23 @@ if (isset($_GET['ajax_receipt_id'])) {
     if (!$sale_q || mysqli_num_rows($sale_q) == 0) { die("<div class='text-danger text-center'>Chek topilmadi!</div>"); }
     $sale_data = mysqli_fetch_assoc($sale_q);
     
+    // product_name ustunini qo'shish (bir martalik migration — eski yozuvlar uchun ham)
+    @mysqli_query($conn, "ALTER TABLE sale_items ADD COLUMN IF NOT EXISTS product_name VARCHAR(255) DEFAULT NULL");
+
     $items_html = "";
-    $items_q = mysqli_query($conn, "SELECT * FROM sale_items WHERE sale_id = $receipt_id");
+    // COALESCE: avval to'g'ridan saqlangan nom, keyin JOIN orqali nom, oxirida fallback
+    $items_q = mysqli_query($conn,
+        "SELECT si.quantity, si.unit_price, si.price AS total_amt,
+                COALESCE(NULLIF(si.product_name,''), p.name, 'Noma''lum mahsulot') AS p_nm
+         FROM sale_items si
+         LEFT JOIN products p ON si.product_id = p.id
+         WHERE si.sale_id = $receipt_id");
     if ($items_q && mysqli_num_rows($items_q) > 0) {
         while ($item = mysqli_fetch_assoc($items_q)) {
-            $p_name = $item['product_name'] ?? 'Mahsulot';
-            $p_qty = floatval($item['quantity'] ?? 1);
-            $p_price = floatval($item['price'] ?? 0);
-            $p_total = floatval($item['total_price'] ?? ($p_qty * $p_price));
+            $p_name = $item['p_nm'];
+            $p_qty  = floatval($item['quantity'] ?? 1);
+            $p_price = floatval($item['unit_price'] ?? 0);
+            $p_total = floatval($item['total_amt'] ?? ($p_qty * $p_price));
             $items_html .= "<tr><td style='padding: 4px 0;'>{$p_name}</td><td style='text-align: center;'>{$p_qty}</td><td style='text-align: right;'>".number_format($p_total, 0, '.', ' ')."</td></tr>";
         }
     } else {
@@ -65,7 +74,11 @@ if (isset($_GET['ajax_receipt_id'])) {
             <tr><td><b>Chek №:</b></td><td style='text-align:right;'>".str_pad($sale_data['id'], 6, '0', STR_PAD_LEFT)."</td></tr>
             <tr><td><b>Sana:</b></td><td style='text-align:right;'>".date('d.m.Y H:i', strtotime($sale_data['sale_date']))."</td></tr>
             <tr><td><b>Kassir:</b></td><td style='text-align:right;'>".htmlspecialchars($sale_data['cashier'] ?? 'Tizim')."</td></tr>
-            <tr><td><b>To'lov:</b></td><td style='text-align:right;'>".ucfirst($sale_data['payment_method'] ?? 'Naqd')."</td></tr>
+            <tr><td><b>To'lov:</b></td><td style='text-align:right;'>".([
+                'naqd'=>'💵 Naqd pul',
+                'karta'=>'💳 Karta',
+                'online'=>'🌐 Online'
+            ][$sale_data['payment_method'] ?? 'naqd'] ?? ucfirst($sale_data['payment_method'] ?? 'Naqd'))."</td></tr>
         </table>
         <div style='border-bottom: 1px dashed #000; margin-bottom: 10px;'></div>
         <table style='width: 100%; font-size: 13px; margin-bottom: 10px;'>
@@ -234,6 +247,7 @@ $dav_yangi = (int)($dav_yangi['c'] ?? 0);
                 <h1 style="font-size: 26px; font-weight: 800; color: #0F172A; margin: 0;">Savdo Tarixi va Hisobotlar</h1>
                 <p class="text-muted mt-1 mb-0" style="font-size: 14px;">Barcha tranzaksiyalar ro'yxati.</p>
             </div>
+            <a href="fix_product_names.php" style="background:#f59e0b;color:#fff;border-radius:10px;padding:8px 16px;font-weight:700;font-size:13px;text-decoration:none;" title="Cheklardagi mahsulot nomlarini bir marta tuzating">🛠️ Nomlarni tuzat</a>
         </div>
 
         <!-- TABLAR -->
