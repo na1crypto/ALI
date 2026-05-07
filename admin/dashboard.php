@@ -126,6 +126,56 @@ $xodimlar = [];
 if ($xodimlar_q) while ($x = mysqli_fetch_assoc($xodimlar_q)) $xodimlar[] = $x;
 
 // ==========================================
+// TO'LOV USULI BO'YICHA BUGUN
+// ==========================================
+$pay_today_q = mysqli_query($conn, "
+    SELECT COALESCE(payment_method,'naqd') as pm, COALESCE(SUM(total_price),0) as summa
+    FROM sales WHERE DATE(sale_date)='$today'
+    GROUP BY pm
+");
+$pay_today = ['naqd'=>0,'karta'=>0,'online'=>0,'optom'=>0];
+if($pay_today_q) while($r=mysqli_fetch_assoc($pay_today_q)) {
+    $k = $r['pm'] ?: 'naqd';
+    if(isset($pay_today[$k])) $pay_today[$k]=(float)$r['summa'];
+    else $pay_today['naqd']+=(float)$r['summa'];
+}
+
+// ==========================================
+// TO'LOV USULI BO'YICHA OY
+// ==========================================
+$pay_month_q = mysqli_query($conn, "
+    SELECT COALESCE(payment_method,'naqd') as pm, COALESCE(SUM(total_price),0) as summa
+    FROM sales WHERE DATE_FORMAT(sale_date,'%Y-%m')='$current_month'
+    GROUP BY pm
+");
+$pay_month = ['naqd'=>0,'karta'=>0,'online'=>0,'optom'=>0];
+if($pay_month_q) while($r=mysqli_fetch_assoc($pay_month_q)) {
+    $k = $r['pm'] ?: 'naqd';
+    if(isset($pay_month[$k])) $pay_month[$k]=(float)$r['summa'];
+    else $pay_month['naqd']+=(float)$r['summa'];
+}
+
+// ==========================================
+// OYLIK KUNLIK DINAMIKA (modal uchun)
+// ==========================================
+$monthly_q = mysqli_query($conn, "
+    SELECT DATE(sale_date) as kun, COALESCE(SUM(total_price),0) as s
+    FROM sales
+    WHERE DATE_FORMAT(sale_date,'%Y-%m')='$current_month'
+    GROUP BY DATE(sale_date)
+    ORDER BY kun ASC
+");
+$monthly_raw = [];
+if($monthly_q) while($r=mysqli_fetch_assoc($monthly_q)) $monthly_raw[$r['kun']]=(float)$r['s'];
+$m_days=[]; $m_points=[];
+$days_in_month=(int)date('t');
+for($i=1;$i<=$days_in_month;$i++){
+    $d=date('Y-m').'-'.str_pad($i,2,'0',STR_PAD_LEFT);
+    $m_days[]=(string)$i;
+    $m_points[]=isset($monthly_raw[$d])?(float)$monthly_raw[$d]:0;
+}
+
+// ==========================================
 // OXIRGI BUYURTMALAR
 // ==========================================
 $recent_orders = mysqli_query($conn, "
@@ -451,6 +501,12 @@ body {
 .ai-msg p { margin: 0 0 6px; }
 .ai-msg p:last-child { margin: 0; }
 
+.chat-input-wrap {
+    display: flex; align-items: center; gap: 8px;
+    background: #F4F7FE; border-radius: 12px;
+    border: 1.5px solid #E9EDF7;
+    padding: 4px 8px 4px 4px; transition: .2s;
+}
 .chat-input-wrap:focus-within { border-color: #4318FF; background: #fff; }
 .chat-input {
     flex: 1; background: transparent; border: none; outline: none;
@@ -582,6 +638,138 @@ body {
 }
 .xod-sal-save:hover { background: #3730a3; }
 .xod-sal-save:active { transform: scale(.92); }
+
+/* ================================================
+   STAT CARD LINK
+================================================ */
+a.stat-card-link { text-decoration: none; display: block; height: 100%; }
+a.stat-card-link .stat-card { cursor: pointer; }
+
+.stat-card.clickable { cursor: pointer; }
+.stat-card.clickable:active { transform: scale(0.97); }
+
+/* ================================================
+   ANALYTICS MODAL
+================================================ */
+.an-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(17,28,68,0.55);
+    backdrop-filter: blur(6px);
+    align-items: center; justify-content: center;
+    padding: 20px;
+}
+.an-overlay.open { display: flex; }
+
+.an-modal {
+    background: #fff;
+    border-radius: 24px;
+    width: 100%; max-width: 860px;
+    max-height: 92vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 60px rgba(17,28,68,0.18);
+    animation: modalIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes modalIn {
+    from { opacity: 0; transform: scale(0.88) translateY(30px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.an-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 24px 28px 20px;
+    border-bottom: 1px solid #F1F5F9;
+    position: sticky; top: 0; background: #fff; z-index: 2;
+    border-radius: 24px 24px 0 0;
+}
+.an-title { font-size: 19px; font-weight: 800; color: #111C44; }
+.an-sub   { font-size: 12px; color: #A3AED0; margin-top: 2px; }
+.an-close {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: #F4F7FE; border: none; cursor: pointer;
+    font-size: 18px; display: flex; align-items: center; justify-content: center;
+    color: #64748b; transition: .2s; flex-shrink: 0;
+}
+.an-close:hover { background: #FEECEF; color: #EE5D50; }
+
+.an-body { padding: 24px 28px; }
+
+/* KPI row */
+.an-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 28px;
+}
+@media(max-width:600px){ .an-kpi-row { grid-template-columns: 1fr 1fr; } }
+.an-kpi {
+    border-radius: 16px;
+    padding: 16px 18px;
+    display: flex; flex-direction: column; gap: 4px;
+}
+.an-kpi-lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; opacity: .75; }
+.an-kpi-val { font-size: 20px; font-weight: 900; line-height: 1.1; }
+.an-kpi-sub { font-size: 11px; opacity: .65; }
+
+/* Charts area */
+.an-charts {
+    display: grid;
+    grid-template-columns: 1.7fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+@media(max-width:640px){ .an-charts { grid-template-columns: 1fr; } }
+
+.an-chart-box {
+    background: #F8FAFF;
+    border-radius: 16px;
+    padding: 18px;
+}
+.an-chart-title {
+    font-size: 13px; font-weight: 700; color: #111C44;
+    margin-bottom: 14px;
+}
+.an-canvas-wrap { position: relative; height: 220px; }
+.an-canvas-wrap canvas { width: 100% !important; height: 100% !important; }
+
+/* Donut legend */
+.donut-legend {
+    margin-top: 16px;
+    display: flex; flex-direction: column; gap: 8px;
+}
+.dl-row {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 12px; font-weight: 600;
+}
+.dl-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    display: inline-block; margin-right: 7px; flex-shrink: 0;
+}
+.dl-name { display: flex; align-items: center; color: #475569; flex: 1; }
+.dl-val  { color: #111C44; font-weight: 800; font-size: 13px; }
+
+/* Today breakdown */
+.an-today-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+@media(max-width:500px){ .an-today-grid { grid-template-columns: 1fr; } }
+.an-today-card {
+    border-radius: 14px;
+    padding: 14px 16px;
+    text-align: center;
+}
+.atc-ico  { font-size: 24px; margin-bottom: 6px; }
+.atc-lbl  { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; opacity: .7; }
+.atc-val  { font-size: 16px; font-weight: 900; margin-top: 4px; }
+.atc-sub  { font-size: 10px; opacity: .6; margin-top: 2px; }
+
+.an-section-title {
+    font-size: 13px; font-weight: 700; color: #A3AED0;
+    text-transform: uppercase; letter-spacing: .6px;
+    margin-bottom: 12px;
+}
 </style>
 </head>
 <body>
@@ -606,15 +794,16 @@ body {
 
     <!-- STAT KARTALAR -->
     <div class="row mb-4">
+        <!-- Bugungi Tushum — Modal ochadi -->
         <div class="col-3 mb-3 fade-up d2">
-            <div class="stat-card">
+            <div class="stat-card clickable" onclick="openAnalyticsModal()" title="Batafsil tahlilni ko'rish">
                 <div class="stat-icon ic-blue">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
                     </svg>
                 </div>
                 <div>
-                    <div class="stat-label">Bugungi Tushum</div>
+                    <div class="stat-label">Bugungi Tushum <span style="font-size:10px;color:#4318FF;">📊</span></div>
                     <div class="stat-val">
                         <?= number_format($tushum, 0, '.', ' ') ?>
                         <span class="stat-unit">UZS</span>
@@ -622,7 +811,9 @@ body {
                 </div>
             </div>
         </div>
+        <!-- Xaridlar Soni — savdo tarixiga o'tadi -->
         <div class="col-3 mb-3 fade-up d3">
+            <a href="sales_history.php" class="stat-card-link" title="Savdo tarixini ko'rish">
             <div class="stat-card">
                 <div class="stat-icon ic-orange">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -631,15 +822,18 @@ body {
                     </svg>
                 </div>
                 <div>
-                    <div class="stat-label">Xaridlar Soni</div>
+                    <div class="stat-label">Xaridlar Soni <span style="font-size:10px;color:#FFB547;">→</span></div>
                     <div class="stat-val">
                         <?= $chek_soni ?>
                         <span class="stat-unit">ta chek</span>
                     </div>
                 </div>
             </div>
+            </a>
         </div>
+        <!-- Ombordagi Tovarlar — mahsulotlarga o'tadi -->
         <div class="col-3 mb-3 fade-up d4">
+            <a href="Mahsulotlar/index.php" class="stat-card-link" title="Omborga o'tish">
             <div class="stat-card">
                 <div class="stat-icon ic-green">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -648,15 +842,18 @@ body {
                     </svg>
                 </div>
                 <div>
-                    <div class="stat-label">Ombordagi Tovarlar</div>
+                    <div class="stat-label">Ombordagi Tovarlar <span style="font-size:10px;color:#05CD99;">→</span></div>
                     <div class="stat-val">
                         <?= $prod_count ?>
                         <span class="stat-unit">xil</span>
                     </div>
                 </div>
             </div>
+            </a>
         </div>
+        <!-- Tugayotgan Tovarlar — mahsulotlar filtriga o'tadi -->
         <div class="col-3 mb-3 fade-up d5">
+            <a href="Mahsulotlar/index.php?filter=low_stock" class="stat-card-link" title="Tugayotgan tovarlarni ko'rish">
             <div class="stat-card">
                 <div class="stat-icon ic-red">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -665,13 +862,14 @@ body {
                     </svg>
                 </div>
                 <div>
-                    <div class="stat-label">Tugayotgan Tovarlar</div>
+                    <div class="stat-label">Tugayotgan Tovarlar <span style="font-size:10px;color:#EE5D50;">→</span></div>
                     <div class="stat-val" style="color:#EE5D50;">
                         <?= $low_stock ?>
                         <span class="stat-unit">ta</span>
                     </div>
                 </div>
             </div>
+            </a>
         </div>
     </div>
 
@@ -902,6 +1100,95 @@ body {
 
 </div><!-- /main-content -->
 
+<!-- ═══════════════════════════════════════════════
+     ANALYTICS MODAL — Bugungi Tushum tahlili
+════════════════════════════════════════════════ -->
+<div class="an-overlay" id="analyticsOverlay" onclick="closeAnalyticsModal(event)">
+<div class="an-modal" id="analyticsModal">
+
+    <!-- Header -->
+    <div class="an-header">
+        <div>
+            <div class="an-title">📊 Savdo Tahlili</div>
+            <div class="an-sub"><?= date('d F, Y') ?> · <?= htmlspecialchars(date('F Y')) ?></div>
+        </div>
+        <button class="an-close" onclick="closeAnalyticsModal(null, true)">✕</button>
+    </div>
+
+    <div class="an-body">
+
+        <!-- KPI row: oylik ko'rsatkichlar -->
+        <div class="an-section-title">📅 <?= date('F Y') ?> — Oylik Ko'rsatkichlar</div>
+        <div class="an-kpi-row">
+            <div class="an-kpi" style="background:#F0EEFF;color:#4318FF;">
+                <div class="an-kpi-lbl" style="color:#4318FF;">Umumiy Tushum</div>
+                <div class="an-kpi-val"><?= number_format($oylik_savdo,0,'.',' ') ?></div>
+                <div class="an-kpi-sub">UZS</div>
+            </div>
+            <div class="an-kpi" style="background:#E8F9F1;color:#05CD99;">
+                <div class="an-kpi-lbl" style="color:#05CD99;">💵 Naqd</div>
+                <div class="an-kpi-val"><?= number_format($pay_month['naqd'],0,'.',' ') ?></div>
+                <div class="an-kpi-sub">UZS</div>
+            </div>
+            <div class="an-kpi" style="background:#FFF4E5;color:#FFB547;">
+                <div class="an-kpi-lbl" style="color:#FFB547;">💳 Karta</div>
+                <div class="an-kpi-val"><?= number_format($pay_month['karta'],0,'.',' ') ?></div>
+                <div class="an-kpi-sub">UZS</div>
+            </div>
+            <div class="an-kpi" style="background:#FEECEF;color:#EE5D50;">
+                <div class="an-kpi-lbl" style="color:#EE5D50;">🏪 Optom</div>
+                <div class="an-kpi-val"><?= number_format($pay_month['optom'],0,'.',' ') ?></div>
+                <div class="an-kpi-sub">UZS</div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="an-charts">
+            <!-- Oylik dinamika grafigi -->
+            <div class="an-chart-box">
+                <div class="an-chart-title">📈 Oylik Savdo Dinamikasi (kunlar bo'yicha)</div>
+                <div class="an-canvas-wrap">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Donut chart: to'lov usullari -->
+            <div class="an-chart-box">
+                <div class="an-chart-title">🥧 To'lov Usullari (oy)</div>
+                <div class="an-canvas-wrap" style="height:160px;">
+                    <canvas id="donutChart"></canvas>
+                </div>
+                <div class="donut-legend" id="donutLegend"></div>
+            </div>
+        </div>
+
+        <!-- Bugun bo'yicha breakdown -->
+        <div class="an-section-title">🌅 Bugun — <?= date('d F, Y') ?></div>
+        <div class="an-today-grid">
+            <div class="an-today-card" style="background:#F0EEFF;">
+                <div class="atc-ico">💵</div>
+                <div class="atc-lbl" style="color:#4318FF;">Naqd</div>
+                <div class="atc-val" style="color:#4318FF;"><?= number_format($pay_today['naqd'],0,'.',' ') ?></div>
+                <div class="atc-sub" style="color:#4318FF;">UZS</div>
+            </div>
+            <div class="an-today-card" style="background:#FFF4E5;">
+                <div class="atc-ico">💳</div>
+                <div class="atc-lbl" style="color:#FFB547;">Karta</div>
+                <div class="atc-val" style="color:#FFB547;"><?= number_format($pay_today['karta'],0,'.',' ') ?></div>
+                <div class="atc-sub" style="color:#FFB547;">UZS</div>
+            </div>
+            <div class="an-today-card" style="background:#FEECEF;">
+                <div class="atc-ico">🏪</div>
+                <div class="atc-lbl" style="color:#EE5D50;">Optom</div>
+                <div class="atc-val" style="color:#EE5D50;"><?= number_format($pay_today['optom'],0,'.',' ') ?></div>
+                <div class="atc-sub" style="color:#EE5D50;">UZS</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</div><!-- /analyticsOverlay -->
+
 <script>
 /* ================================================
    GRAFIK - pure JS Canvas (Chart.js o'rniga)
@@ -1056,6 +1343,163 @@ body {
         if (e.key === 'Enter') sendMsg();
     });
 })();
+
+/* ================================================
+   ANALYTICS MODAL
+================================================ */
+var _monthlyChartDrawn = false;
+var _donutChartDrawn   = false;
+
+function openAnalyticsModal() {
+    var overlay = document.getElementById('analyticsOverlay');
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    if (!_monthlyChartDrawn) { drawMonthlyChart(); _monthlyChartDrawn = true; }
+    if (!_donutChartDrawn)   { drawDonutChart();   _donutChartDrawn   = true; }
+}
+function closeAnalyticsModal(e, force) {
+    if (force || (e && e.target === document.getElementById('analyticsOverlay'))) {
+        document.getElementById('analyticsOverlay').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+}
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeAnalyticsModal(null,true); });
+
+/* ── Oylik grafik ── */
+function drawMonthlyChart() {
+    var canvas = document.getElementById('monthlyChart');
+    if (!canvas) return;
+    var ctx    = canvas.getContext('2d');
+    var labels = <?= json_encode($m_days) ?>;
+    var data   = <?= json_encode($m_points) ?>;
+
+    function draw() {
+        var W = canvas.parentElement.offsetWidth  || 420;
+        var H = canvas.parentElement.offsetHeight || 220;
+        canvas.width  = W; canvas.height = H;
+        var pad = { top: 24, right: 16, bottom: 36, left: 58 };
+        var maxV = Math.max.apply(null, data) || 1;
+        var n    = data.length;
+        var gap  = (W - pad.left - pad.right) / n;
+        var bw   = Math.max(2, Math.floor(gap * 0.55));
+
+        // grid
+        ctx.strokeStyle='#E2E8F0'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+        for(var g=0;g<=4;g++){
+            var gy=pad.top+(H-pad.top-pad.bottom)/4*g;
+            ctx.beginPath(); ctx.moveTo(pad.left,gy); ctx.lineTo(W-pad.right,gy); ctx.stroke();
+            var val=Math.round(maxV/4*(4-g));
+            ctx.fillStyle='#A3AED0'; ctx.font='10px Segoe UI'; ctx.textAlign='right';
+            ctx.fillText(val>=1000000?(val/1000000).toFixed(1)+'M':val>=1000?(val/1000).toFixed(0)+'K':val, pad.left-4, gy+4);
+        }
+        ctx.setLineDash([]);
+
+        // line path
+        ctx.beginPath();
+        var pts=[];
+        for(var i=0;i<n;i++){
+            var x=pad.left+gap*i+gap/2;
+            var y=H-pad.bottom-(data[i]/maxV)*(H-pad.top-pad.bottom);
+            pts.push({x:x,y:y});
+        }
+        // gradient fill
+        if(pts.length>1){
+            var grad=ctx.createLinearGradient(0,pad.top,0,H-pad.bottom);
+            grad.addColorStop(0,'rgba(67,24,255,0.18)');
+            grad.addColorStop(1,'rgba(67,24,255,0.01)');
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, H-pad.bottom);
+            ctx.lineTo(pts[0].x, pts[0].y);
+            for(var i=1;i<pts.length;i++){
+                var cx=(pts[i-1].x+pts[i].x)/2;
+                ctx.bezierCurveTo(cx,pts[i-1].y,cx,pts[i].y,pts[i].x,pts[i].y);
+            }
+            ctx.lineTo(pts[pts.length-1].x,H-pad.bottom);
+            ctx.closePath();
+            ctx.fillStyle=grad; ctx.fill();
+            // line
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x,pts[0].y);
+            for(var i=1;i<pts.length;i++){
+                var cx=(pts[i-1].x+pts[i].x)/2;
+                ctx.bezierCurveTo(cx,pts[i-1].y,cx,pts[i].y,pts[i].x,pts[i].y);
+            }
+            ctx.strokeStyle='#4318FF'; ctx.lineWidth=2.5; ctx.stroke();
+        }
+
+        // dots + x-labels (every 5th day)
+        ctx.textAlign='center'; ctx.fillStyle='#A3AED0'; ctx.font='10px Segoe UI';
+        for(var i=0;i<pts.length;i++){
+            if(data[i]>0){
+                ctx.beginPath(); ctx.arc(pts[i].x,pts[i].y,3.5,0,Math.PI*2);
+                ctx.fillStyle='#4318FF'; ctx.fill();
+            }
+            if(i===0||i===pts.length-1||(i+1)%5===0){
+                ctx.fillStyle='#A3AED0';
+                ctx.fillText(labels[i], pts[i].x, H-pad.bottom+15);
+            }
+        }
+    }
+    draw();
+}
+
+/* ── Donut chart ── */
+function drawDonutChart() {
+    var canvas = document.getElementById('donutChart');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+
+    var payData = [
+        { label:'💵 Naqd',  val:<?= $pay_month['naqd'] ?>,  color:'#4318FF' },
+        { label:'💳 Karta', val:<?= $pay_month['karta'] ?>, color:'#FFB547' },
+        { label:'🏪 Optom', val:<?= $pay_month['optom'] ?>, color:'#EE5D50' },
+        { label:'🌐 Online',val:<?= $pay_month['online'] ?>,color:'#05CD99' }
+    ].filter(function(d){ return d.val > 0; });
+
+    var total = payData.reduce(function(s,d){ return s+d.val; }, 0);
+    if(!total) payData=[{label:'Ma\'lumot yo\'q', val:1, color:'#E2E8F0'}];
+
+    // legend
+    var legend = document.getElementById('donutLegend');
+    if(legend){
+        legend.innerHTML = payData.map(function(d){
+            var pct = total>1 ? Math.round(d.val/total*100) : 0;
+            var fmt = d.val>=1000000?(d.val/1000000).toFixed(1)+'M':d.val>=1000?(d.val/1000).toFixed(0)+'K':d.val;
+            return '<div class="dl-row"><span class="dl-name"><span class="dl-dot" style="background:'+d.color+'"></span>'+d.label+' ('+pct+'%)</span><span class="dl-val">'+fmt+'</span></div>';
+        }).join('');
+    }
+
+    function draw(){
+        var W=canvas.parentElement.offsetWidth||200;
+        var H=canvas.parentElement.offsetHeight||160;
+        canvas.width=W; canvas.height=H;
+        var cx=W/2, cy=H/2, outerR=Math.min(W,H)/2-8, innerR=outerR*0.55;
+        var start=-Math.PI/2;
+        payData.forEach(function(d){
+            var slice=d.val/total*Math.PI*2;
+            ctx.beginPath();
+            ctx.moveTo(cx,cy);
+            ctx.arc(cx,cy,outerR,start,start+slice);
+            ctx.closePath();
+            ctx.fillStyle=d.color;
+            ctx.fill();
+            start+=slice;
+        });
+        // hole
+        ctx.beginPath();
+        ctx.arc(cx,cy,innerR,0,Math.PI*2);
+        ctx.fillStyle='#F8FAFF';
+        ctx.fill();
+        // center text
+        ctx.textAlign='center';
+        ctx.fillStyle='#111C44'; ctx.font='bold 13px Segoe UI';
+        ctx.fillText('Jami', cx, cy-4);
+        var tot_fmt=total>=1000000?(total/1000000).toFixed(1)+'M':total>=1000?(total/1000).toFixed(0)+'K':total;
+        ctx.font='bold 11px Segoe UI'; ctx.fillStyle='#4318FF';
+        ctx.fillText(tot_fmt, cx, cy+12);
+    }
+    draw();
+}
 
 // ── Xodim maoshini saqlash ──
 async function saveSalary(userId) {
