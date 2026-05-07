@@ -22,13 +22,19 @@ $cats_res   = mysqli_query($conn,"SELECT id, name FROM categories ORDER BY name 
 $categories = [];
 if ($cats_res) while ($c = mysqli_fetch_assoc($cats_res)) $categories[] = $c;
 
+// Migrations
+@mysqli_query($conn,"ALTER TABLE products ADD COLUMN IF NOT EXISTS image MEDIUMTEXT DEFAULT NULL");
+@mysqli_query($conn,"ALTER TABLE products ADD COLUMN IF NOT EXISTS notes TEXT DEFAULT NULL");
+
 // Mahsulotlar (optom narxda) — min_qty fallback
 $prods_res = mysqli_query($conn,
     "SELECT p.id, p.name, p.price, p.optom_price, p.quantity,
             IFNULL(p.unit,'dona') AS unit,
             IFNULL(p.min_qty,1)  AS min_qty,
             p.category_id,
-            IFNULL(c.name,'')    AS kategoriya
+            IFNULL(c.name,'')    AS kategoriya,
+            p.image,
+            p.notes
      FROM products p
      LEFT JOIN categories c ON p.category_id = c.id
      WHERE p.quantity > 0
@@ -145,74 +151,119 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 .grid{
   flex:1;overflow-y:auto;overflow-x:hidden;
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(145px,1fr));
-  gap:10px;padding:10px 10px 24px;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:10px;padding:10px 10px 80px;
   align-content:start;
 }
 .grid::-webkit-scrollbar{width:3px;}
 .grid::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:4px;}
 
-/* PRODUCT CARD */
+/* PRODUCT CARD — market style */
 .pcard{
   background:#fff;border-radius:16px;
   border:1.5px solid var(--border);
-  padding:0;
   cursor:pointer;position:relative;
-  transition:.18s;
+  transition:.18s cubic-bezier(.4,0,.2,1);
   display:flex;flex-direction:column;
   overflow:hidden;
-  box-shadow:0 2px 8px rgba(0,0,0,.05);
+  box-shadow:0 2px 8px rgba(0,0,0,.04);
 }
+.pcard:hover{ box-shadow:0 6px 18px rgba(0,0,0,.08); transform:translateY(-2px); }
 .pcard:active{transform:scale(.95);}
-.pcard.in-cart{border-color:var(--primary);box-shadow:0 4px 14px rgba(79,70,229,.18);}
-/* Rangli ust chiziq */
-.pcard-top{
-  height:5px;
-  background:var(--clr,var(--primary));
-  flex-shrink:0;
+.pcard.in-cart{
+  border-color:var(--primary);
+  box-shadow:0 4px 14px rgba(79,70,229,.2);
 }
-.pcard-body{padding:10px 10px 10px;}
-/* Kategoriya tegi */
+
+/* Image area */
+.pimg{
+  width:100%;height:110px;flex-shrink:0;
+  background:color-mix(in srgb,var(--clr,var(--primary)) 12%,#f8fafc);
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;position:relative;
+}
+.pimg img{
+  width:100%;height:100%;object-fit:cover;
+  transition:.3s;
+}
+.pcard:hover .pimg img{ transform:scale(1.06); }
+.pimg-ico{
+  font-size:44px;line-height:1;
+  filter:grayscale(0);
+  user-select:none;
+}
+/* Cart overlay on image */
+.pimg-cart-overlay{
+  position:absolute;inset:0;
+  background:rgba(79,70,229,.12);
+  display:none;align-items:center;justify-content:center;
+  font-size:28px;
+}
+.pcard.in-cart .pimg-cart-overlay{ display:flex; }
+
+/* Stock badge */
+.stk-lbl{
+  position:absolute;top:8px;right:8px;
+  font-size:9px;font-weight:800;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(4px);
+  color:var(--muted);
+  padding:2px 7px;border-radius:10px;
+  box-shadow:0 1px 4px rgba(0,0,0,.08);
+  z-index:2;
+}
+.stk-lbl.low{background:#fff7ed;color:#f59e0b;}
+
+/* Body */
+.pcard-body{padding:8px 10px 10px;}
+
+/* Category tag */
 .cat-tag{
   display:inline-flex;align-items:center;
-  background:rgba(255,255,255,.85);
+  background:color-mix(in srgb,var(--clr,var(--primary)) 12%,transparent);
   color:var(--clr,var(--primary));
-  border:1px solid;
-  border-color:color-mix(in srgb,var(--clr,var(--primary)) 35%,transparent);
-  font-size:10px;font-weight:800;
-  padding:2px 8px;border-radius:20px;
-  margin-bottom:6px;max-width:100%;
+  font-size:9px;font-weight:800;letter-spacing:.3px;
+  padding:2px 7px;border-radius:20px;
+  margin-bottom:5px;max-width:100%;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  text-transform:uppercase;
 }
+
+/* Name */
 .pname{
   font-weight:700;font-size:13px;color:var(--dark);
   line-height:1.35;
   overflow:hidden;display:-webkit-box;
   -webkit-line-clamp:2;-webkit-box-orient:vertical;
-  min-height:36px;
+  min-height:34px;margin-bottom:3px;
 }
+
+/* Notes / packaging */
+.pnotes{
+  font-size:10px;font-weight:600;color:#94a3b8;
+  overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+  margin-bottom:6px;
+}
+
+/* Bottom row */
 .pcard-bot{
-  display:flex;align-items:flex-end;justify-content:space-between;
-  margin-top:8px;
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:4px;gap:4px;
 }
-.pprice{font-size:15px;font-weight:900;color:var(--dark);line-height:1.1;}
-.puzs{font-size:10px;font-weight:700;color:var(--muted);}
-.pminq{font-size:10px;color:#f59e0b;font-weight:700;margin-top:2px;}
+.pprice-wrap{ flex:1;min-width:0; }
+.pprice{font-size:14px;font-weight:900;color:var(--dark);line-height:1.1;}
+.puzs{font-size:9px;font-weight:700;color:var(--muted);}
+.pminq{font-size:9px;color:#f59e0b;font-weight:700;margin-top:1px;}
+
+/* Add button */
 .padd-ico{
-  width:30px;height:30px;border-radius:10px;
+  width:32px;height:32px;border-radius:10px;
   background:var(--clr,var(--primary));
-  color:#fff;font-size:20px;font-weight:700;
+  color:#fff;font-size:21px;font-weight:700;
   display:flex;align-items:center;justify-content:center;
   flex-shrink:0;transition:.15s;line-height:1;
+  box-shadow:0 3px 8px color-mix(in srgb,var(--clr,var(--primary)) 40%,transparent);
 }
-.pcard.in-cart .padd-ico{background:var(--green);content:'✓';}
-.stk-lbl{
-  position:absolute;top:12px;right:8px;
-  font-size:9px;font-weight:800;
-  background:#f1f5f9;color:var(--muted);
-  padding:2px 6px;border-radius:10px;
-}
-.stk-lbl.low{background:#fff7ed;color:#f59e0b;}
+.pcard.in-cart .padd-ico{background:var(--green);}
 
 /* FLOATING CART BAR — desktop: o'ngda */
 .cart-bar{
@@ -418,16 +469,19 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
   .grid{
     grid-template-columns: repeat(2, 1fr);
     gap:8px;
-    padding:8px 8px 16px;
+    padding:8px 8px 80px;
   }
 
   /* TOVAR KARTOCHKA */
   .pcard{ border-radius:14px; }
-  .pcard-body{ padding:8px 8px 8px; }
-  .pname{ font-size:12px; min-height:32px; }
-  .pprice{ font-size:14px; }
-  .padd-ico{ width:26px; height:26px; font-size:18px; border-radius:8px; }
+  .pimg{ height:90px; }
+  .pimg-ico{ font-size:36px; }
+  .pcard-body{ padding:7px 8px 8px; }
+  .pname{ font-size:12px; min-height:30px; }
+  .pprice{ font-size:13px; }
+  .padd-ico{ width:28px; height:28px; font-size:19px; border-radius:8px; }
   .cat-tag{ font-size:9px; }
+  .pnotes{ font-size:9px; }
 
   /* ── SAVAT FAB: o'ng tomonda yuvarlangan tugma ── */
   .cart-bar{
@@ -523,9 +577,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 
   <!-- TOP CATEGORIES BAR -->
   <div class="cats-bar">
-    <button class="scat active" onclick="filterCat(0,this)">Barcha</button>
-    <?php foreach($categories as $c): ?>
-    <button class="scat" onclick="filterCat(<?= (int)$c['id'] ?>,this)"><?= htmlspecialchars($c['name']) ?></button>
+    <button class="scat active" onclick="filterCat(0,this)">🛍️ Barcha</button>
+    <?php
+    $ci2=0;
+    foreach($categories as $c):
+        $ico = $catEmojis[$ci2 % count($catEmojis)]; $ci2++;
+    ?>
+    <button class="scat" onclick="filterCat(<?= (int)$c['id'] ?>,this)"><?= $ico ?> <?= htmlspecialchars($c['name']) ?></button>
     <?php endforeach; ?>
   </div>
 
@@ -549,11 +607,16 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
     <!-- MAHSULOTLAR -->
     <div class="grid" id="grid">
       <?php
-      // Kategoriyaga rang berish
+      // Kategoriyaga rang + emoji
       $catColors = ['#4f46e5','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#84cc16','#f97316','#6366f1'];
-      $catColorMap = [];
+      $catEmojis = ['🥤','🌾','🥛','🥩','🥦','🍭','🧴','🍚','🫙','🍦','🛒','📦','🥐','🍎','🧃'];
+      $catColorMap = []; $catEmojiMap = [];
       $ci = 0;
-      foreach($categories as $c){ $catColorMap[$c['name']] = $catColors[$ci % count($catColors)]; $ci++; }
+      foreach($categories as $c){
+          $catColorMap[$c['name']] = $catColors[$ci % count($catColors)];
+          $catEmojiMap[$c['name']] = $catEmojis[$ci % count($catEmojis)];
+          $ci++;
+      }
 
       foreach($products as $p):
         $dispPrice = $p['optom_price'] > 0 ? $p['optom_price'] : $p['price'];
@@ -561,7 +624,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
         $unit  = $p['unit'] ?: 'dona';
         $qty   = (int)$p['quantity'];
         $clr   = $catColorMap[$p['kategoriya']] ?? '#4f46e5';
-        $lowStock = $qty <= 5;
+        $catEmoji = $catEmojiMap[$p['kategoriya']] ?? '📦';
+        $lowStock = ($qty > 0 && $qty <= 5);
+        $hasImg   = !empty($p['image']);
+        $notes    = htmlspecialchars($p['notes'] ?? '');
       ?>
       <div class="pcard"
            data-id="<?= $p['id'] ?>"
@@ -573,20 +639,31 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
            data-stock="<?= $qty ?>"
            onclick="addToCart(this)"
            style="--clr:<?= $clr ?>">
-        <!-- Rangli top bar -->
-        <div class="pcard-top"></div>
+
+        <!-- IMAGE AREA -->
+        <div class="pimg">
+          <?php if($hasImg): ?>
+            <img src="<?= htmlspecialchars($p['image']) ?>" alt="<?= htmlspecialchars($p['name']) ?>" loading="lazy">
+          <?php else: ?>
+            <span class="pimg-ico"><?= $catEmoji ?></span>
+          <?php endif; ?>
+          <div class="pimg-cart-overlay">✓</div>
+        </div>
+
         <!-- Zaxira belgisi -->
-        <span class="stk-lbl <?= $lowStock?'low':'' ?>"><?= $qty <= 0 ? '❌' : $qty.' '.$unit ?></span>
+        <span class="stk-lbl <?= $lowStock?'low':'' ?>"><?= $lowStock ? '⚠️ '.$qty.' '.$unit : $qty.' '.$unit ?></span>
+
+        <!-- BODY -->
         <div class="pcard-body">
-          <!-- Kategoriya -->
           <?php if($p['kategoriya']): ?>
           <div class="cat-tag"><?= htmlspecialchars($p['kategoriya']) ?></div>
           <?php endif; ?>
-          <!-- Nomi -->
           <div class="pname"><?= htmlspecialchars($p['name']) ?></div>
-          <!-- Narx + qo'shish tugmasi -->
+          <?php if($notes): ?>
+          <div class="pnotes">📦 <?= $notes ?></div>
+          <?php endif; ?>
           <div class="pcard-bot">
-            <div>
+            <div class="pprice-wrap">
               <div class="pprice"><?= number_format($dispPrice,0,'.',' ') ?> <span class="puzs">UZS</span></div>
               <?php if($minQ>1): ?><div class="pminq">min <?= $minQ ?> <?= $unit ?></div><?php endif; ?>
             </div>

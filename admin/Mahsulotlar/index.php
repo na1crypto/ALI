@@ -21,6 +21,7 @@ if (isset($_POST['saqlash'])) {
     $min_qty = max(1, (int)($_POST['min_qty'] ?? 1));
     $expiry_date = !empty($_POST['expiry_date']) ? "'" . mysqli_real_escape_string($conn, $_POST['expiry_date']) . "'" : "NULL";
     $manufacture_date = !empty($_POST['manufacture_date']) ? "'" . mysqli_real_escape_string($conn, $_POST['manufacture_date']) . "'" : "NULL";
+    $notes = mysqli_real_escape_string($conn, trim($_POST['notes'] ?? ''));
 
     // Kategoriya mantiqi (Yangi qo'shildimi yoki eskisi tanlandimi?)
     $category_id_post = $_POST['category_id'];
@@ -44,6 +45,7 @@ if (isset($_POST['saqlash'])) {
     @mysqli_query($conn, "ALTER TABLE products ADD COLUMN IF NOT EXISTS min_qty INT NOT NULL DEFAULT 1");
     @mysqli_query($conn, "ALTER TABLE products ADD COLUMN IF NOT EXISTS image MEDIUMTEXT DEFAULT NULL");
     @mysqli_query($conn, "ALTER TABLE products ADD COLUMN IF NOT EXISTS manufacture_date DATE DEFAULT NULL");
+    @mysqli_query($conn, "ALTER TABLE products ADD COLUMN IF NOT EXISTS notes TEXT DEFAULT NULL");
 
     // Rasm qayta ishlash (base64 → DB)
     $image_sql = 'NULL';
@@ -58,8 +60,8 @@ if (isset($_POST['saqlash'])) {
     }
 
     // 1-urinish: id siz (AUTO_INCREMENT bo'lsa ishlaydi)
-    $sql = "INSERT INTO products (barcode, category_id, name, purchase_price, optom_price, price, quantity, unit, min_qty, image, manufacture_date, expiry_date)
-            VALUES ('$barcode', '$category_id', '$name', '$purchase_price', '$optom_price', '$price', '$quantity', '$unit', '$min_qty', $image_sql, $manufacture_date, $expiry_date)";
+    $sql = "INSERT INTO products (barcode, category_id, name, purchase_price, optom_price, price, quantity, unit, min_qty, image, manufacture_date, expiry_date, notes)
+            VALUES ('$barcode', '$category_id', '$name', '$purchase_price', '$optom_price', '$price', '$quantity', '$unit', '$min_qty', $image_sql, $manufacture_date, $expiry_date, '$notes')";
 
     $ok = mysqli_query($conn, $sql);
 
@@ -67,8 +69,8 @@ if (isset($_POST['saqlash'])) {
     if (!$ok) {
         $nid_r = mysqli_query($conn, "SELECT COALESCE(MAX(id),0)+1 AS nid FROM products");
         $nid = $nid_r ? (int)mysqli_fetch_assoc($nid_r)['nid'] : 1;
-        $sql2 = "INSERT INTO products (id, barcode, category_id, name, purchase_price, optom_price, price, quantity, unit, min_qty, image, manufacture_date, expiry_date)
-                 VALUES ($nid, '$barcode', '$category_id', '$name', '$purchase_price', '$optom_price', '$price', '$quantity', '$unit', '$min_qty', $image_sql, $manufacture_date, $expiry_date)";
+        $sql2 = "INSERT INTO products (id, barcode, category_id, name, purchase_price, optom_price, price, quantity, unit, min_qty, image, manufacture_date, expiry_date, notes)
+                 VALUES ($nid, '$barcode', '$category_id', '$name', '$purchase_price', '$optom_price', '$price', '$quantity', '$unit', '$min_qty', $image_sql, $manufacture_date, $expiry_date, '$notes')";
         $ok = mysqli_query($conn, $sql2);
     }
 
@@ -290,9 +292,17 @@ while($c = mysqli_fetch_assoc($cats_query)) {
                                 <input type="text" name="barcode" class="bento-input-modal" placeholder="Skanerlang yoki bo'sh qoldiring">
                             </div>
                             <!-- Nomi -->
-                            <div class="col-md-12">
+                            <div class="col-md-8">
                                 <label class="bento-label">Mahsulot Nomi *</label>
                                 <input type="text" name="name" class="bento-input-modal" placeholder="Masalan: Coca-Cola 1L" required>
+                            </div>
+                            <!-- Qadoqlash izoh (blok/quti) -->
+                            <div class="col-md-4">
+                                <label class="bento-label">📦 Qadoqlash</label>
+                                <input type="text" name="notes" class="bento-input-modal"
+                                       placeholder="1 blokda 6 ta, 1 qutida 24 ta"
+                                       style="border-color:#f59e0b;background:#fffbeb;">
+                                <div style="font-size:11px;color:#94a3b8;margin-top:-10px;margin-bottom:12px;">Ixtiyoriy: qadoqlash, eslatma</div>
                             </div>
                             <!-- Narxlar -->
                             <div class="col-md-4">
@@ -353,10 +363,22 @@ while($c = mysqli_fetch_assoc($cats_query)) {
 
                             <!-- Rasm -->
                             <div class="col-md-12">
-                                <label class="bento-label">📷 Rasm <span class="text-muted font-weight-normal">(Ixtiyoriy, max 2MB)</span></label>
-                                <input type="file" name="image" accept="image/*" class="bento-input-modal" style="padding:8px;"
+                                <label class="bento-label">📷 Mahsulot rasmi <span class="text-muted font-weight-normal">(Ixtiyoriy, max 2MB · JPG/PNG/WEBP)</span></label>
+                                <div id="imgDropZone" style="border:2px dashed #e2e8f0;border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:.2s;background:#f8fafc;"
+                                     onclick="document.getElementById('imgFileInput').click()"
+                                     ondragover="event.preventDefault();this.style.borderColor='#4F46E5';this.style.background='#EEF2FF';"
+                                     ondragleave="this.style.borderColor='#e2e8f0';this.style.background='#f8fafc';"
+                                     ondrop="handleImgDrop(event)">
+                                    <div id="imgPlaceholder">
+                                        <div style="font-size:28px;margin-bottom:6px;">🖼️</div>
+                                        <div style="font-size:13px;font-weight:700;color:#475569;">Rasmni bu yerga tashlang yoki bosing</div>
+                                        <div style="font-size:11px;color:#94a3b8;margin-top:3px;">JPG, PNG, WEBP · max 2 MB</div>
+                                    </div>
+                                    <img id="prev_new" src="" style="display:none;max-height:120px;border-radius:10px;object-fit:contain;margin:0 auto;">
+                                </div>
+                                <input type="file" id="imgFileInput" name="image" accept="image/*" style="display:none;"
                                        onchange="previewImg(this,'prev_new')">
-                                <img id="prev_new" src="" style="display:none;max-height:80px;border-radius:10px;margin-top:8px;object-fit:cover;">
+                                <button type="button" id="imgClearBtn" style="display:none;margin-top:6px;background:#fee2e2;border:none;border-radius:8px;padding:4px 12px;font-size:12px;font-weight:700;color:#ef4444;cursor:pointer;" onclick="clearImg()">✕ Rasmni o'chirish</button>
                             </div>
                         </div>
                     </div>
@@ -425,11 +447,43 @@ while($c = mysqli_fetch_assoc($cats_query)) {
 
     function previewImg(input, previewId) {
         const prev = document.getElementById(previewId);
+        const ph   = document.getElementById('imgPlaceholder');
+        const clrBtn = document.getElementById('imgClearBtn');
+        const dz   = document.getElementById('imgDropZone');
         if (input.files && input.files[0]) {
             const reader = new FileReader();
-            reader.onload = e => { prev.src = e.target.result; prev.style.display = 'block'; };
+            reader.onload = e => {
+                prev.src = e.target.result;
+                prev.style.display = 'block';
+                if (ph) ph.style.display = 'none';
+                if (clrBtn) clrBtn.style.display = 'inline-block';
+                if (dz) { dz.style.borderColor='#10B981'; dz.style.background='#f0fdf4'; }
+            };
             reader.readAsDataURL(input.files[0]);
         }
+    }
+    function handleImgDrop(e) {
+        e.preventDefault();
+        const dz = document.getElementById('imgDropZone');
+        dz.style.borderColor='#e2e8f0'; dz.style.background='#f8fafc';
+        const file = e.dataTransfer.files[0];
+        if (!file) return;
+        const inp = document.getElementById('imgFileInput');
+        const dt  = new DataTransfer();
+        dt.items.add(file);
+        inp.files = dt.files;
+        previewImg(inp, 'prev_new');
+    }
+    function clearImg() {
+        document.getElementById('imgFileInput').value = '';
+        const prev = document.getElementById('prev_new');
+        const ph   = document.getElementById('imgPlaceholder');
+        const clrBtn = document.getElementById('imgClearBtn');
+        const dz   = document.getElementById('imgDropZone');
+        prev.src = ''; prev.style.display = 'none';
+        if (ph) ph.style.display = 'block';
+        if (clrBtn) clrBtn.style.display = 'none';
+        if (dz) { dz.style.borderColor='#e2e8f0'; dz.style.background='#f8fafc'; }
     }
 
     // Chiqarilgan sana + kun → tugash sanasini avtomatik hisoblash
