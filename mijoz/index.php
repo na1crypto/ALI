@@ -22,6 +22,17 @@ $cats_res   = mysqli_query($conn,"SELECT id, name FROM categories ORDER BY name 
 $categories = [];
 if ($cats_res) while ($c = mysqli_fetch_assoc($cats_res)) $categories[] = $c;
 
+// Kategoriya rang va emoji xaritasi (HTML dan oldin aniqlanadi)
+$catColors   = ['#4f46e5','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#84cc16','#f97316','#6366f1'];
+$catEmojis   = ['🥤','🌾','🥛','🥩','🥦','🍭','🧴','🍚','🫙','🍦','🛒','📦','🥐','🍎','🧃'];
+$catColorMap = []; $catEmojiMap = [];
+$_ci = 0;
+foreach($categories as $_c){
+    $catColorMap[$_c['name']] = $catColors[$_ci % count($catColors)];
+    $catEmojiMap[$_c['name']] = $catEmojis[$_ci % count($catEmojis)];
+    $_ci++;
+}
+
 // Migrations
 @mysqli_query($conn,"ALTER TABLE products ADD COLUMN IF NOT EXISTS image MEDIUMTEXT DEFAULT NULL");
 @mysqli_query($conn,"ALTER TABLE products ADD COLUMN IF NOT EXISTS notes TEXT DEFAULT NULL");
@@ -578,12 +589,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
   <!-- TOP CATEGORIES BAR -->
   <div class="cats-bar">
     <button class="scat active" onclick="filterCat(0,this)">🛍️ Barcha</button>
-    <?php
-    $ci2=0;
-    foreach($categories as $c):
-        $ico = $catEmojis[$ci2 % count($catEmojis)]; $ci2++;
-    ?>
-    <button class="scat" onclick="filterCat(<?= (int)$c['id'] ?>,this)"><?= $ico ?> <?= htmlspecialchars($c['name']) ?></button>
+    <?php foreach($categories as $c): ?>
+    <button class="scat" onclick="filterCat(<?= (int)$c['id'] ?>,this)"><?= $catEmojiMap[$c['name']] ?? '📦' ?> <?= htmlspecialchars($c['name']) ?></button>
     <?php endforeach; ?>
   </div>
 
@@ -606,19 +613,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 
     <!-- MAHSULOTLAR -->
     <div class="grid" id="grid">
-      <?php
-      // Kategoriyaga rang + emoji
-      $catColors = ['#4f46e5','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#84cc16','#f97316','#6366f1'];
-      $catEmojis = ['🥤','🌾','🥛','🥩','🥦','🍭','🧴','🍚','🫙','🍦','🛒','📦','🥐','🍎','🧃'];
-      $catColorMap = []; $catEmojiMap = [];
-      $ci = 0;
-      foreach($categories as $c){
-          $catColorMap[$c['name']] = $catColors[$ci % count($catColors)];
-          $catEmojiMap[$c['name']] = $catEmojis[$ci % count($catEmojis)];
-          $ci++;
-      }
-
-      foreach($products as $p):
+      <?php foreach($products as $p):
         $dispPrice = $p['optom_price'] > 0 ? $p['optom_price'] : $p['price'];
         $minQ  = max(1,(int)$p['min_qty']);
         $unit  = $p['unit'] ?: 'dona';
