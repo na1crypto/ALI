@@ -1,4 +1,7 @@
 <?php
+// TiDB Cloud: exception o'rniga false qaytarsin (MYSQLI_REPORT_OFF)
+mysqli_report(MYSQLI_REPORT_OFF);
+
 $host = "gateway01.eu-central-1.prod.aws.tidbcloud.com";
 $port = 4000;
 $user = "sJwLacNCvu5iX2E.root";

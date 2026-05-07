@@ -59,19 +59,21 @@ if (isset($_POST['saqlash'])) {
         }
     }
 
-    // 1-urinish: id siz (AUTO_INCREMENT bo'lsa ishlaydi)
-    $sql = "INSERT INTO products (barcode, category_id, name, purchase_price, optom_price, price, quantity, unit, min_qty, image, manufacture_date, expiry_date, notes)
-            VALUES ('$barcode', '$category_id', '$name', '$purchase_price', '$optom_price', '$price', '$quantity', '$unit', '$min_qty', $image_sql, $manufacture_date, $expiry_date, '$notes')";
+    // TiDB Cloud: AUTO_INCREMENT ishlamaydi — har doim explicit id beramiz
+    mysqli_report(MYSQLI_REPORT_OFF); // exception o'rniga false qaytarsin
+    $nid_r = mysqli_query($conn, "SELECT COALESCE(MAX(id),0)+1 AS nid FROM products");
+    $nid   = ($nid_r && mysqli_num_rows($nid_r)) ? (int)mysqli_fetch_assoc($nid_r)['nid'] : 1;
 
+    $sql = "INSERT INTO products (id, barcode, category_id, name, purchase_price, optom_price, price, quantity, unit, min_qty, image, manufacture_date, expiry_date, notes)
+            VALUES ($nid, '$barcode', '$category_id', '$name', '$purchase_price', '$optom_price', '$price', '$quantity', '$unit', '$min_qty', $image_sql, $manufacture_date, $expiry_date, '$notes')";
     $ok = mysqli_query($conn, $sql);
 
-    // 2-urinish: TiDB uchun COALESCE(MAX(id),0)+1
+    // Agar id to'qnashsa (race condition) — bir yuqori id bilan qaytadan urin
     if (!$ok) {
-        $nid_r = mysqli_query($conn, "SELECT COALESCE(MAX(id),0)+1 AS nid FROM products");
-        $nid = $nid_r ? (int)mysqli_fetch_assoc($nid_r)['nid'] : 1;
-        $sql2 = "INSERT INTO products (id, barcode, category_id, name, purchase_price, optom_price, price, quantity, unit, min_qty, image, manufacture_date, expiry_date, notes)
-                 VALUES ($nid, '$barcode', '$category_id', '$name', '$purchase_price', '$optom_price', '$price', '$quantity', '$unit', '$min_qty', $image_sql, $manufacture_date, $expiry_date, '$notes')";
-        $ok = mysqli_query($conn, $sql2);
+        $nid++;
+        $sql = "INSERT INTO products (id, barcode, category_id, name, purchase_price, optom_price, price, quantity, unit, min_qty, image, manufacture_date, expiry_date, notes)
+                VALUES ($nid, '$barcode', '$category_id', '$name', '$purchase_price', '$optom_price', '$price', '$quantity', '$unit', '$min_qty', $image_sql, $manufacture_date, $expiry_date, '$notes')";
+        $ok = mysqli_query($conn, $sql);
     }
 
     if ($ok) {
