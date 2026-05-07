@@ -22,15 +22,57 @@ $cats_res   = mysqli_query($conn,"SELECT id, name FROM categories ORDER BY name 
 $categories = [];
 if ($cats_res) while ($c = mysqli_fetch_assoc($cats_res)) $categories[] = $c;
 
-// Kategoriya rang va emoji xaritasi (HTML dan oldin aniqlanadi)
-$catColors   = ['#4f46e5','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#84cc16','#f97316','#6366f1'];
-$catEmojis   = ['🥤','🌾','🥛','🥩','🥦','🍭','🧴','🍚','🫙','🍦','🛒','📦','🥐','🍎','🧃'];
+// ── Smart emoji by keyword ──
+function catEmoji($name) {
+    $n = mb_strtolower($name);
+    if(str_contains($n,'gazli')||str_contains($n,'ichimlik')||str_contains($n,'suv')) return '🥤';
+    if(str_contains($n,'sut')||str_contains($n,'qatiq')||str_contains($n,'kefir')||str_contains($n,'pishloq')||str_contains($n,'saryog')) return '🥛';
+    if(str_contains($n,'go\'sht')||str_contains($n,'gosht')||str_contains($n,'kolbasa')||str_contains($n,'tuxum')) return '🥩';
+    if(str_contains($n,'sabzavot')||str_contains($n,'meva')||str_contains($n,'poliz')) return '🥦';
+    if(str_contains($n,'non')||str_contains($n,'un mahsulot')||str_contains($n,'lavash')||str_contains($n,'makaron')) return '🍞';
+    if(str_contains($n,'qandolat')||str_contains($n,'shirinlik')||str_contains($n,'konfet')||str_contains($n,'shokolad')) return '🍭';
+    if(str_contains($n,'gigiy')||str_contains($n,'tozalik')||str_contains($n,'kir yuvish')||str_contains($n,'parfum')||str_contains($n,'shampun')) return '🧴';
+    if(str_contains($n,'don')||str_contains($n,'yorma')||str_contains($n,'guruch')||str_contains($n,'grechka')) return '🌾';
+    if(str_contains($n,'moy')||str_contains($n,'sous')||str_contains($n,'ketchup')||str_contains($n,'majonez')) return '🫙';
+    if(str_contains($n,'muzqaymoq')||str_contains($n,'muz q')) return '🍦';
+    if(str_contains($n,'dukkak')||str_contains($n,'loviya')||str_contains($n,'no\'xat')) return '🫘';
+    if(str_contains($n,'yog\'')) return '🧈';
+    if(str_contains($n,'un')) return '🌾';
+    return '🛒';
+}
+// ── Smart color by keyword ──
+function catColor($name) {
+    $n = mb_strtolower($name);
+    if(str_contains($n,'gazli')||str_contains($n,'ichimlik')) return '#4f46e5';
+    if(str_contains($n,'sut'))  return '#06b6d4';
+    if(str_contains($n,'gosht')||str_contains($n,'go\'sht')) return '#ef4444';
+    if(str_contains($n,'sabzavot')||str_contains($n,'meva')) return '#10b981';
+    if(str_contains($n,'non')||str_contains($n,'un')) return '#f59e0b';
+    if(str_contains($n,'qandolat')||str_contains($n,'shirinlik')) return '#ec4899';
+    if(str_contains($n,'gigiy')||str_contains($n,'tozalik')||str_contains($n,'kir')) return '#8b5cf6';
+    if(str_contains($n,'don')||str_contains($n,'yorma')) return '#84cc16';
+    if(str_contains($n,'moy')||str_contains($n,'sous')) return '#f97316';
+    if(str_contains($n,'muzqaymoq')) return '#06b6d4';
+    // fallback: sequential
+    static $i=0; $cols=['#4f46e5','#10b981','#f59e0b','#8b5cf6','#06b6d4','#ec4899','#f97316']; return $cols[($i++)%count($cols)];
+}
+// ── Short display name (filter bar) ──
+function shortName($name, $max=13) {
+    // faqat birinchi so'zlar, max $max belgi
+    $words = explode(' ', $name);
+    $out = $words[0];
+    for($i=1;$i<count($words);$i++){
+        $t = $out.' '.$words[$i];
+        if(mb_strlen($t) > $max) break;
+        $out = $t;
+    }
+    return $out;
+}
+
 $catColorMap = []; $catEmojiMap = [];
-$_ci = 0;
 foreach($categories as $_c){
-    $catColorMap[$_c['name']] = $catColors[$_ci % count($catColors)];
-    $catEmojiMap[$_c['name']] = $catEmojis[$_ci % count($catEmojis)];
-    $_ci++;
+    $catColorMap[$_c['name']] = catColor($_c['name']);
+    $catEmojiMap[$_c['name']] = catEmoji($_c['name']);
 }
 
 // Migrations
@@ -123,9 +165,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 }
 .cats-bar::-webkit-scrollbar{display:none;}
 .scat{
-  padding:7px 14px;border-radius:20px;cursor:pointer;border:none;
+  padding:6px 13px;border-radius:20px;cursor:pointer;border:none;
   background:#f1f5f9;transition:.15s;white-space:nowrap;flex-shrink:0;
   font-size:12px;font-weight:700;color:var(--muted);
+  max-width:140px;overflow:hidden;text-overflow:ellipsis;
 }
 .scat.active{background:linear-gradient(135deg,var(--primary),var(--primary-d));color:#fff;box-shadow:0 3px 8px rgba(79,70,229,.3);}
 .scat:active{transform:scale(.95);}
@@ -229,14 +272,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 
 /* Category tag */
 .cat-tag{
-  display:inline-flex;align-items:center;
-  background:color-mix(in srgb,var(--clr,var(--primary)) 12%,transparent);
+  display:inline-flex;align-items:center;gap:3px;
+  background:color-mix(in srgb,var(--clr,var(--primary)) 11%,transparent);
   color:var(--clr,var(--primary));
-  font-size:9px;font-weight:800;letter-spacing:.3px;
-  padding:2px 7px;border-radius:20px;
+  font-size:10px;font-weight:700;
+  padding:2px 8px;border-radius:20px;
   margin-bottom:5px;max-width:100%;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  text-transform:uppercase;
 }
 
 /* Name */
@@ -590,7 +632,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
   <div class="cats-bar">
     <button class="scat active" onclick="filterCat(0,this)">🛍️ Barcha</button>
     <?php foreach($categories as $c): ?>
-    <button class="scat" onclick="filterCat(<?= (int)$c['id'] ?>,this)"><?= $catEmojiMap[$c['name']] ?? '📦' ?> <?= htmlspecialchars($c['name']) ?></button>
+    <button class="scat" onclick="filterCat(<?= (int)$c['id'] ?>,this)"
+            title="<?= htmlspecialchars($c['name']) ?>">
+      <?= $catEmojiMap[$c['name']] ?? '📦' ?> <?= htmlspecialchars(shortName($c['name'], 12)) ?>
+    </button>
     <?php endforeach; ?>
   </div>
 
@@ -651,7 +696,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
         <!-- BODY -->
         <div class="pcard-body">
           <?php if($p['kategoriya']): ?>
-          <div class="cat-tag"><?= htmlspecialchars($p['kategoriya']) ?></div>
+          <div class="cat-tag"><?= $catEmojiMap[$p['kategoriya']] ?? '' ?> <?= htmlspecialchars(shortName($p['kategoriya'], 14)) ?></div>
           <?php endif; ?>
           <div class="pname"><?= htmlspecialchars($p['name']) ?></div>
           <?php if($notes): ?>
