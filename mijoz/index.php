@@ -205,14 +205,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 .grid{
   flex:1;overflow-y:auto;overflow-x:hidden;
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  grid-template-columns:repeat(auto-fill,minmax(155px,1fr));
+  grid-auto-rows:1fr;          /* barcha satrlar teng balandlik */
   gap:10px;padding:10px 10px 80px;
   align-content:start;
 }
 .grid::-webkit-scrollbar{width:3px;}
 .grid::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:4px;}
 
-/* PRODUCT CARD — market style */
+/* PRODUCT CARD */
 .pcard{
   background:#fff;border-radius:16px;
   border:1.5px solid var(--border);
@@ -221,6 +222,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
   display:flex;flex-direction:column;
   overflow:hidden;
   box-shadow:0 2px 8px rgba(0,0,0,.04);
+  height:100%;           /* grid-auto-rows:1fr bilan to'liq balandlik */
 }
 .pcard:hover{ box-shadow:0 6px 18px rgba(0,0,0,.08); transform:translateY(-2px); }
 .pcard:active{transform:scale(.95);}
@@ -229,46 +231,54 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
   box-shadow:0 4px 14px rgba(79,70,229,.2);
 }
 
-/* Image area */
+/* ── IMAGE AREA ── fixed aspect ratio, har qanday rasm teng */
 .pimg{
-  width:100%;height:110px;flex-shrink:0;
-  background:color-mix(in srgb,var(--clr,var(--primary)) 12%,#f8fafc);
+  width:100%;
+  aspect-ratio:4/3;        /* BARCHA rasmlar 4:3 nisbatda */
+  flex-shrink:0;
+  background:color-mix(in srgb,var(--clr,var(--primary)) 10%,#f4f7fe);
   display:flex;align-items:center;justify-content:center;
   overflow:hidden;position:relative;
 }
 .pimg img{
-  width:100%;height:100%;object-fit:cover;
+  width:100%;height:100%;
+  object-fit:cover;        /* rasm to'liq va teng to'ldiriladi */
+  object-position:center;
   transition:.3s;
+  display:block;
 }
 .pcard:hover .pimg img{ transform:scale(1.06); }
 .pimg-ico{
-  font-size:44px;line-height:1;
-  filter:grayscale(0);
+  font-size:46px;line-height:1;
   user-select:none;
+  opacity:.85;
 }
-/* Cart overlay on image */
 .pimg-cart-overlay{
   position:absolute;inset:0;
-  background:rgba(79,70,229,.12);
+  background:rgba(79,70,229,.15);
   display:none;align-items:center;justify-content:center;
-  font-size:28px;
+  font-size:30px;
 }
 .pcard.in-cart .pimg-cart-overlay{ display:flex; }
 
 /* Stock badge */
 .stk-lbl{
-  position:absolute;top:8px;right:8px;
+  position:absolute;top:7px;right:7px;
   font-size:9px;font-weight:800;
-  background:rgba(255,255,255,.92);backdrop-filter:blur(4px);
+  background:rgba(255,255,255,.93);backdrop-filter:blur(4px);
   color:var(--muted);
   padding:2px 7px;border-radius:10px;
-  box-shadow:0 1px 4px rgba(0,0,0,.08);
-  z-index:2;
+  box-shadow:0 1px 4px rgba(0,0,0,.1);
+  z-index:2;white-space:nowrap;
 }
-.stk-lbl.low{background:#fff7ed;color:#f59e0b;}
+.stk-lbl.low{background:#fffbeb;color:#f59e0b;}
 
-/* Body */
-.pcard-body{padding:8px 10px 10px;}
+/* ── BODY — flex column, narx har doim pastda ── */
+.pcard-body{
+  padding:8px 10px 10px;
+  display:flex;flex-direction:column;
+  flex:1;                  /* qolgan bo'shliqni to'ldiradi */
+}
 
 /* Category tag */
 .cat-tag{
@@ -277,30 +287,38 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
   color:var(--clr,var(--primary));
   font-size:10px;font-weight:700;
   padding:2px 8px;border-radius:20px;
-  margin-bottom:5px;max-width:100%;
+  margin-bottom:4px;
+  max-width:100%;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  flex-shrink:0;
+  height:20px;             /* doimiy balandlik */
+  line-height:16px;
 }
 
-/* Name */
+/* Name — har doim 2 qatorga cheklangan */
 .pname{
   font-weight:700;font-size:13px;color:var(--dark);
   line-height:1.35;
   overflow:hidden;display:-webkit-box;
   -webkit-line-clamp:2;-webkit-box-orient:vertical;
-  min-height:34px;margin-bottom:3px;
+  height:35px;             /* 2 qator × 13px × 1.35 ≈ 35px (fixed) */
+  flex-shrink:0;
+  margin-bottom:3px;
 }
 
-/* Notes / packaging */
+/* Notes — 1 qator yoki bo'sh joy (balandlik doimiy) */
 .pnotes{
   font-size:10px;font-weight:600;color:#94a3b8;
   overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
-  margin-bottom:6px;
+  height:16px;flex-shrink:0;  /* izoh bo'lmasa bo'sh qoladi */
+  margin-bottom:4px;
 }
 
-/* Bottom row */
+/* Bottom row — har doim body ning pastida */
 .pcard-bot{
   display:flex;align-items:center;justify-content:space-between;
-  margin-top:4px;gap:4px;
+  gap:4px;
+  margin-top:auto;         /* har doim pastga */
 }
 .pprice-wrap{ flex:1;min-width:0; }
 .pprice{font-size:14px;font-weight:900;color:var(--dark);line-height:1.1;}
@@ -525,16 +543,16 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
     padding:8px 8px 80px;
   }
 
-  /* TOVAR KARTOCHKA */
+  /* TOVAR KARTOCHKA — mobilda ham bir xil balandlik */
   .pcard{ border-radius:14px; }
-  .pimg{ height:90px; }
+  .pimg{ aspect-ratio:4/3; }   /* aspect-ratio saqlanadi */
   .pimg-ico{ font-size:36px; }
-  .pcard-body{ padding:7px 8px 8px; }
-  .pname{ font-size:12px; min-height:30px; }
+  .pcard-body{ padding:6px 8px 8px; }
+  .pname{ font-size:12px; height:32px; }
   .pprice{ font-size:13px; }
   .padd-ico{ width:28px; height:28px; font-size:19px; border-radius:8px; }
-  .cat-tag{ font-size:9px; }
-  .pnotes{ font-size:9px; }
+  .cat-tag{ font-size:9px; height:18px; line-height:14px; }
+  .pnotes{ font-size:9px; height:14px; }
 
   /* ── SAVAT FAB: o'ng tomonda yuvarlangan tugma ── */
   .cart-bar{
@@ -699,9 +717,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
           <div class="cat-tag"><?= $catEmojiMap[$p['kategoriya']] ?? '' ?> <?= htmlspecialchars(shortName($p['kategoriya'], 14)) ?></div>
           <?php endif; ?>
           <div class="pname"><?= htmlspecialchars($p['name']) ?></div>
-          <?php if($notes): ?>
-          <div class="pnotes">📦 <?= $notes ?></div>
-          <?php endif; ?>
+          <div class="pnotes"><?= $notes ? '📦 '.$notes : '' ?></div>
           <div class="pcard-bot">
             <div class="pprice-wrap">
               <div class="pprice"><?= number_format($dispPrice,0,'.',' ') ?> <span class="puzs">UZS</span></div>
