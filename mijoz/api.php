@@ -209,6 +209,43 @@ if ($action === 'checkout') {
         }
 
         mysqli_commit($conn);
+
+        // ── Telegram admin bildirishnomasi ──
+        $st_tg = mysqli_fetch_assoc(mysqli_query($conn, "SELECT telegram_admin_chat, store_name FROM settings WHERE id=1"));
+        $tg_chat = $st_tg['telegram_admin_chat'] ?? '';
+        if ($tg_chat) {
+            $store_tg  = $st_tg['store_name'] ?? "Do'kon";
+            $ico       = $yetkazish ? '🚚 Yetkazish' : '🏪 O\'zi oladi';
+            $pay_ico   = $payment_method_val === 'naqd' ? '💵 Naqd' : ($payment_method_val === 'karta' ? '💳 Karta' : '🌐 Online');
+            $items_str = '';
+            foreach ($cart as $ci) {
+                $items_str .= "• " . $ci['name'] . " × " . $ci['qty'] . " = " . number_format($ci['price']*$ci['qty'],0,'.',' ') . " UZS\n";
+            }
+            $tg_msg =
+                "🛒 *Yangi buyurtma \\#$sale_id*\n\n" .
+                "$ico | $pay_ico\n" .
+                "📱 Tel: " . str_replace(['-','(',')','+','.',' '],['\\-','\\(','\\)','\\+','\\.','\\'],$phone) . "\n" .
+                ($yetkazish && $manzil ? "📍 Manzil: " . mb_substr($manzil,0,50) . "\n" : "") .
+                ($izoh ? "📝 Izoh: " . mb_substr($izoh,0,80) . "\n" : "") .
+                "\n$items_str\n" .
+                "💰 *Jami: " . number_format($final,0,'.',' ') . " UZS*";
+
+            // Escape for MarkdownV2
+            $tg_msg = preg_replace_callback('/(?<!\\\\)([_\[\]()~`>#+=|{}.!])/', function($m){ return '\\'.$m[1]; }, $tg_msg);
+
+            $bot_token = '8694101598:AAE54kDSYsl4NaTxNA2bw73-4sN9Jq4xVmE';
+            $tg_data = ['chat_id'=>$tg_chat,'text'=>$tg_msg,'parse_mode'=>'MarkdownV2'];
+            $tg_ch = curl_init("https://api.telegram.org/bot$bot_token/sendMessage");
+            curl_setopt_array($tg_ch,[
+                CURLOPT_RETURNTRANSFER=>true,CURLOPT_POST=>true,
+                CURLOPT_POSTFIELDS=>json_encode($tg_data),
+                CURLOPT_HTTPHEADER=>['Content-Type: application/json'],
+                CURLOPT_SSL_VERIFYPEER=>false,CURLOPT_TIMEOUT=>5,
+            ]);
+            curl_exec($tg_ch);
+            curl_close($tg_ch);
+        }
+
         $_SESSION['cart'] = [];
         echo json_encode(['status'=>'ok','sale_id'=>$sale_id,'total'=>$final]);
     } catch (Exception $e) {
