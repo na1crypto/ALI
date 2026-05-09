@@ -239,13 +239,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
   user-select:none;
   opacity:.85;
 }
-.pimg-cart-overlay{
-  position:absolute;inset:0;
-  background:rgba(79,70,229,.15);
-  display:none;align-items:center;justify-content:center;
-  font-size:30px;
-}
-.pcard.in-cart .pimg-cart-overlay{ display:flex; }
+.pimg-cart-overlay{ display:none; }
 
 /* Stock badge */
 .stk-lbl{
