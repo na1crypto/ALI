@@ -188,27 +188,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 .search-ic{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:15px;}
 .search-rel{position:relative;}
 
-/* BANNER */
-.banner{
-  margin:8px 10px 0;
-  background:linear-gradient(135deg,#4f46e5,#7c3aed);
-  border-radius:12px;
-  padding:10px 14px;font-size:12px;font-weight:700;color:#fff;
-  display:flex;align-items:center;gap:10px;flex-shrink:0;
-  box-shadow:0 4px 12px rgba(79,70,229,.3);
-}
-.banner-ico{font-size:22px;flex-shrink:0;}
-.banner-txt{flex:1;}
-.banner-txt b{font-size:13px;display:block;}
-
 /* PRODUCTS GRID */
 .grid{
   flex:1;overflow-y:auto;overflow-x:hidden;
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(155px,1fr));
-  grid-auto-rows:1fr;          /* barcha satrlar teng balandlik */
+  grid-auto-rows:262px;
   gap:10px;padding:10px 10px 80px;
-  align-content:start;
 }
 .grid::-webkit-scrollbar{width:3px;}
 .grid::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:4px;}
@@ -231,10 +217,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
   box-shadow:0 4px 14px rgba(79,70,229,.2);
 }
 
-/* ── IMAGE AREA ── fixed aspect ratio, har qanday rasm teng */
+/* ── IMAGE AREA ── fixed height, har qanday karta teng ── */
 .pimg{
   width:100%;
-  aspect-ratio:4/3;        /* BARCHA rasmlar 4:3 nisbatda */
+  height:128px;
   flex-shrink:0;
   background:#f0f2f5;
   display:flex;align-items:center;justify-content:center;
@@ -532,21 +518,17 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
   .search-wrap{ padding:6px 8px; }
   .search-box{ height:38px; font-size:14px; }
 
-  /* BANNER */
-  .banner{ margin:6px 8px 0; padding:8px 10px; font-size:11px; }
-  .banner-txt b{ font-size:11px; }
-
-  /* TOVAR GRID: 2 ustun */
+    /* TOVAR GRID: 2 ustun, fixed height */
   .grid{
     grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: 230px;
     gap:8px;
     padding:8px 8px 80px;
   }
 
   /* TOVAR KARTOCHKA — mobilda ham bir xil balandlik */
   .pcard{ border-radius:14px; }
-  .pimg{ aspect-ratio:4/3; }   /* aspect-ratio saqlanadi */
-  .pimg-ico{ font-size:36px; }
+  .pimg{ height:108px; }
   .pcard-body{ padding:6px 8px 8px; }
   .pname{ font-size:12px; height:32px; }
   .pprice{ font-size:13px; }
@@ -614,8 +596,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
    📟 TABLET (641px – 1024px)
    ══════════════════════════════════════════ */
 @media(min-width:641px) and (max-width:1024px){
-  .grid{ grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; padding:10px 12px 24px; }
-  .pcard{ min-height:130px; }
+  .grid{ grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); grid-auto-rows:262px; gap:10px; padding:10px 12px 24px; }
+  .pimg{ height:128px; }
   .cart-bar{ width:320px; bottom:20px; right:20px; }
   .drawer{ width:420px; }
   .contact-row{ grid-template-columns:1fr 1fr; }
@@ -666,13 +648,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
       </div>
     </div>
 
-    <div class="banner">
-      <span class="banner-ico">🚚</span>
-      <div class="banner-txt">
-        <b>1 500 000 UZS dan yuqori buyurtmada BEPUL yetkazish!</b>
-        <span style="opacity:.85;font-size:11px;">Tez va ishonchli xizmat</span>
-      </div>
-    </div>
 
     <!-- MAHSULOTLAR -->
     <div class="grid" id="grid">
