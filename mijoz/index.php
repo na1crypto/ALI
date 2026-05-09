@@ -236,7 +236,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
   width:100%;
   aspect-ratio:4/3;        /* BARCHA rasmlar 4:3 nisbatda */
   flex-shrink:0;
-  background:color-mix(in srgb,var(--clr,var(--primary)) 10%,#f4f7fe);
+  background:#f0f2f5;
   display:flex;align-items:center;justify-content:center;
   overflow:hidden;position:relative;
 }
@@ -702,8 +702,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
         <div class="pimg">
           <?php if($hasImg): ?>
             <img src="<?= htmlspecialchars($p['image']) ?>" alt="<?= htmlspecialchars($p['name']) ?>" loading="lazy">
-          <?php else: ?>
-            <span class="pimg-ico"><?= $catEmoji ?></span>
           <?php endif; ?>
           <div class="pimg-cart-overlay">✓</div>
         </div>
