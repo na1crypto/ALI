@@ -64,8 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['message'])) {
     // ==========================================
     // 3. GEMINI API VA DINAMIK PROMPT
     // ==========================================
-    $apiKey = "AIzaSyDo8RHyMGKimbVj_bF5B_L_zM-3t7DRbyA"; 
-    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" . $apiKey;
+    $apiKey = "AIzaSyCqXMjQjdDCzIQf5qcaH25HqbqhC61czZg";
+    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey;
 
     // 🔥 MANA SHU YERDA ZIFRA/ZARIFA OLIB TASHLANDI VA BAZAGA BOG'LANDI
     $prompt = "Siz '{$store_name}' do'konining aqlli moliyaviy tahlilchisisiz. 
