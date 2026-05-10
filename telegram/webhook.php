@@ -9,7 +9,7 @@ ini_set('display_errors', 0);
 define('BOT_TOKEN', '8694101598:AAE54kDSYsl4NaTxNA2bw73-4sN9Jq4xVmE');
 define('TG_API',    'https://api.telegram.org/bot'.BOT_TOKEN.'/');
 define('GEMINI_KEY','AIzaSyDo8RHyMGKimbVj_bF5B_L_zM-3t7DRbyA');
-define('GEMINI_URL','https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='.GEMINI_KEY);
+define('GEMINI_URL','https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='.GEMINI_KEY);
 
 require_once __DIR__.'/../config/dokon_db.php';
 
