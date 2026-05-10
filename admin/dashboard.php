@@ -794,22 +794,25 @@ a.stat-card-link .stat-card { cursor: pointer; }
 
     <!-- STAT KARTALAR -->
     <div class="row mb-4">
-        <!-- Bugungi Tushum — Modal ochadi -->
+        <!-- Bugungi Tushum — Moliyaviy tahlilga o'tadi -->
         <div class="col-3 mb-3 fade-up d2">
-            <div class="stat-card clickable" onclick="openAnalyticsModal()" title="Batafsil tahlilni ko'rish">
+            <a href="moliyaviy_tahlil.php" class="stat-card-link">
+            <div class="stat-card clickable" title="Moliyaviy tahlil">
                 <div class="stat-icon ic-blue">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+                        <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+                        <line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/>
                     </svg>
                 </div>
                 <div>
-                    <div class="stat-label">Bugungi Tushum <span style="font-size:10px;color:#4318FF;">📊</span></div>
+                    <div class="stat-label">Bugungi Tushum</div>
                     <div class="stat-val">
                         <?= number_format($tushum, 0, '.', ' ') ?>
                         <span class="stat-unit">UZS</span>
                     </div>
                 </div>
             </div>
+            </a>
         </div>
         <!-- Xaridlar Soni — savdo tarixiga o'tadi -->
         <div class="col-3 mb-3 fade-up d3">
