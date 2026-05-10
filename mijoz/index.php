@@ -177,7 +177,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 
 /* SEARCH */
-.search-wrap{padding:8px 10px;background:#fff;border-bottom:1px solid var(--border);flex-shrink:0;}
+.search-wrap{padding:8px 10px;background:#fff;border-bottom:1px solid var(--border);flex-shrink:0;
+  display:flex;align-items:center;gap:8px;}
+.search-rel{position:relative;flex:1;}
 .search-box{
   width:100%;height:40px;padding:0 12px 0 38px;
   background:#f8fafc;border:1.5px solid var(--border);border-radius:10px;
@@ -186,7 +188,17 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
 .search-box:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(79,70,229,.1);}
 .search-box::placeholder{color:#94a3b8;}
 .search-ic{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:15px;}
-.search-rel{position:relative;}
+
+/* PRICE MODE TOGGLE */
+.price-tog{display:flex;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;flex-shrink:0;}
+.ptog{
+  padding:0 12px;height:40px;border:none;background:#f8fafc;
+  font-size:12px;font-weight:700;color:#94a3b8;cursor:pointer;
+  transition:.18s;line-height:1;white-space:nowrap;
+}
+.ptog:first-child{border-right:1.5px solid var(--border);}
+.ptog.active{background:var(--primary);color:#fff;}
+.ptog.active.optom-active{background:#10b981;}
 
 /* PRODUCTS GRID */
 .grid{
@@ -640,27 +652,34 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
         <span class="search-ic">🔍</span>
         <input type="text" class="search-box" id="searchInp" placeholder="Mahsulot qidirish..." autocomplete="off">
       </div>
+      <div class="price-tog">
+        <button class="ptog" id="btn-chakana" onclick="setPriceMode('chakana')">💰 Chakana</button>
+        <button class="ptog" id="btn-optom"   onclick="setPriceMode('optom')">📦 Optom</button>
+      </div>
     </div>
 
 
     <!-- MAHSULOTLAR -->
     <div class="grid" id="grid">
       <?php foreach($products as $p):
-        $dispPrice = $p['optom_price'] > 0 ? $p['optom_price'] : $p['price'];
+        $retailPrice = (float)$p['price'];
+        $optomPrice  = (float)$p['optom_price'] > 0 ? (float)$p['optom_price'] : $retailPrice;
         $minQ  = max(1,(int)$p['min_qty']);
         $unit  = $p['unit'] ?: 'dona';
         $qty   = (int)$p['quantity'];
         $clr   = $catColorMap[$p['kategoriya']] ?? '#4f46e5';
-        $catEmoji = $catEmojiMap[$p['kategoriya']] ?? '📦';
         $lowStock = ($qty > 0 && $qty <= 5);
         $hasImg   = !empty($p['image']);
         $notes    = htmlspecialchars($p['notes'] ?? '');
+        $hasOptom = (float)$p['optom_price'] > 0 && (float)$p['optom_price'] != $retailPrice;
       ?>
       <div class="pcard"
            data-id="<?= $p['id'] ?>"
            data-name="<?= htmlspecialchars(mb_strtolower($p['name'])) ?>"
            data-cat="<?= (int)$p['category_id'] ?>"
-           data-price="<?= $dispPrice ?>"
+           data-price="<?= $retailPrice ?>"
+           data-retail="<?= $retailPrice ?>"
+           data-optom="<?= $optomPrice ?>"
            data-minq="<?= $minQ ?>"
            data-unit="<?= htmlspecialchars($unit) ?>"
            data-stock="<?= $qty ?>"
@@ -687,7 +706,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);overflow:hidden;user-se
           <div class="pnotes"><?= $notes ? '📦 '.$notes : '' ?></div>
           <div class="pcard-bot">
             <div class="pprice-wrap">
-              <div class="pprice"><?= number_format($dispPrice,0,'.',' ') ?> <span class="puzs">UZS</span></div>
+              <div class="pprice" data-retail-txt="<?= number_format($retailPrice,0,'.',' ') ?>" data-optom-txt="<?= number_format($optomPrice,0,'.',' ') ?>">
+                <?= number_format($retailPrice,0,'.',' ') ?> <span class="puzs">UZS</span>
+              </div>
+              <?php if($hasOptom): ?>
+              <div class="poptom-lbl" style="display:none;font-size:9px;color:#10b981;font-weight:700;">📦 Optom narx</div>
+              <?php endif; ?>
               <?php if($minQ>1): ?><div class="pminq">min <?= $minQ ?> <?= $unit ?></div><?php endif; ?>
             </div>
             <div class="padd-ico">+</div>
@@ -796,7 +820,38 @@ $cbSum   = $cartCount ? number_format($cartTotal,0,'.',' ').' UZS' : '';
 <script>
 const FMT = n => Number(n).toLocaleString('uz-UZ');
 let cart = {};   // {id: {id,name,price,minQ,unit,stock,qty}}
-let activeCat = 0;  // 0 = barchasi, else category_id (int)
+let activeCat = 0;
+let priceMode = localStorage.getItem('priceMode') || 'chakana';
+
+// ── Narx rejimi (Chakana / Optom)
+function setPriceMode(mode, force=false) {
+  const hasCart = Object.keys(cart).length > 0;
+  if (!force && hasCart && mode !== priceMode) {
+    if (!confirm('Narx rejimi o\'zgartirilsa savat tozalanadi. Davom etasizmi?')) return;
+    cart = {};
+  }
+  priceMode = mode;
+  localStorage.setItem('priceMode', mode);
+  // Toggle ko'rinishi
+  document.getElementById('btn-chakana').classList.toggle('active', mode==='chakana');
+  document.getElementById('btn-optom').classList.toggle('active', mode==='optom');
+  document.getElementById('btn-optom').classList.toggle('optom-active', mode==='optom');
+  // Barcha kartalar narxini yangilash
+  document.querySelectorAll('.pcard').forEach(card => {
+    const retail = parseFloat(card.dataset.retail) || 0;
+    const optom  = parseFloat(card.dataset.optom)  || retail;
+    const price  = mode === 'optom' ? optom : retail;
+    card.dataset.price = price;
+    const pEl = card.querySelector('.pprice');
+    if (pEl) {
+      const txt = mode==='optom' ? pEl.dataset.optomTxt : pEl.dataset.retailTxt;
+      pEl.innerHTML = txt + ' <span class="puzs">UZS</span>';
+    }
+    const optomLbl = card.querySelector('.poptom-lbl');
+    if (optomLbl) optomLbl.style.display = mode==='optom' ? 'block' : 'none';
+  });
+  if (hasCart && !force) { syncCart(); }
+}
 
 // ── Cart: server sessiondan o'qish
 <?php if($cartCount): ?>
@@ -812,6 +867,9 @@ cart[<?= $pid ?>] = {
 };
 <?php endforeach; ?>
 <?php endif; ?>
+
+// ── Sahifa yuklanganida narx rejimini tiklash
+setPriceMode(priceMode, true);
 
 // ── Kategoriya filtri (ID bilan — sotuvchi kabi)
 function filterCat(catId, btn) {
@@ -1038,6 +1096,7 @@ async function checkout() {
   fd.append('manzil',         address);
   fd.append('yetkazish',      yetkazish);
   fd.append('payment_method', selectedPayMethod);
+  fd.append('price_mode',     priceMode);
 
   const res = await fetch('/mijoz/api.php?action=checkout',{method:'POST',body:fd});
   const d   = await res.json();

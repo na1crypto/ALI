@@ -77,7 +77,12 @@ if ($action === 'add_cart') {
 
     if (!isset($_SESSION['cart'])) $_SESSION['cart'] = [];
     $cart = &$_SESSION['cart'];
-    $price = (float)$row['optom_price'] ?: (float)$row['price'];
+    $price_mode = trim($_POST['price_mode'] ?? 'chakana');
+    if ($price_mode === 'optom' && floatval($row['optom_price']) > 0) {
+        $price = (float)$row['optom_price'];
+    } else {
+        $price = (float)$row['price'];
+    }
 
     if (isset($cart[$pid])) {
         $new_qty = $cart[$pid]['qty'] + $qty;
@@ -150,6 +155,7 @@ if ($action === 'checkout') {
     $pay_method_in = trim($_POST['payment_method'] ?? 'online');
     $allowed_pays  = ['naqd','karta','online'];
     $payment_method_val = in_array($pay_method_in, $allowed_pays) ? $pay_method_in : 'online';
+    $price_mode_co = trim($_POST['price_mode'] ?? 'chakana');
 
     if (empty($cart)) {
         echo json_encode(['status'=>'error','message'=>'Savat bo\'sh!']); exit;
@@ -168,7 +174,7 @@ if ($action === 'checkout') {
         // Telefon raqamini users jadvalida yangilash
         mysqli_query($conn, "UPDATE users SET phone='$phone' WHERE id=$user_id");
 
-        $note_parts = ["Tel: $phone"];
+        $note_parts = ["Tel: $phone", "Narx: ".($price_mode_co==='optom'?'Optom':'Chakana')];
         if ($yetkazish) $note_parts[] = "Yetkazish: $manzil";
         else            $note_parts[] = "O'zi oladi";
         if ($izoh)      $note_parts[] = $izoh;
