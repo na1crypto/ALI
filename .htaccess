@@ -1,0 +1,14 @@
+Options -Indexes
+RewriteEngine On
+
+# HTTPS ga majburlash (Render avtomatik SSL beradi)
+RewriteCond %{HTTP:X-Forwarded-Proto} =http
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# index.php yo'naltirish
+DirectoryIndex index.php
+
+# PHP fayllarini to'g'ri ko'rsatish
+<FilesMatch "\.php$">
+    SetHandler application/x-httpd-php
+</FilesMatch>
