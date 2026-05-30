@@ -322,4 +322,60 @@ if ($action === 'sync_cart') {
     exit;
 }
 
+// ── Profilni yangilash ──
+if ($action === 'update_profile') {
+    @mysqli_query($conn, "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20) DEFAULT NULL");
+    $uid  = (int)$_SESSION['user_id'];
+    $name = mysqli_real_escape_string($conn, trim($_POST['name'] ?? ''));
+    $phone= mysqli_real_escape_string($conn, trim($_POST['phone'] ?? ''));
+    $oldP = trim($_POST['old_pass'] ?? '');
+    $newP = trim($_POST['new_pass'] ?? '');
+
+    if (!$name) { echo json_encode(['status'=>'error','message'=>'Ism bo\'sh bo\'lmasin!']); exit; }
+
+    // Parol o'zgartirish so'ralganmi?
+    if ($newP !== '') {
+        if (strlen($newP) < 6) { echo json_encode(['status'=>'error','message'=>'Yangi parol kamida 6 belgi bo\'lishi kerak!']); exit; }
+        $row = mysqli_fetch_assoc(mysqli_query($conn, "SELECT password FROM users WHERE id=$uid LIMIT 1"));
+        $ok  = password_verify($oldP, $row['password']) || ($oldP === $row['password']);
+        if (!$ok) { echo json_encode(['status'=>'error','message'=>'Joriy parol noto\'g\'ri!']); exit; }
+        $hash = mysqli_real_escape_string($conn, password_hash($newP, PASSWORD_DEFAULT));
+        mysqli_query($conn, "UPDATE users SET name='$name', phone='$phone', password='$hash' WHERE id=$uid");
+    } else {
+        mysqli_query($conn, "UPDATE users SET name='$name', phone='$phone' WHERE id=$uid");
+    }
+    $_SESSION['name'] = $name;
+    echo json_encode(['status'=>'ok','message'=>'Saqlandi']);
+    exit;
+}
+
+// ── Avatar yuklash ──
+if ($action === 'upload_avatar') {
+    @mysqli_query($conn, "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar MEDIUMTEXT DEFAULT NULL");
+    $uid    = (int)$_SESSION['user_id'];
+    $avatar = trim($_POST['avatar'] ?? '');
+    if (!$avatar || !str_starts_with($avatar, 'data:image')) {
+        echo json_encode(['status'=>'error','message'=>'Rasm topilmadi']); exit;
+    }
+    // Max ~80KB — hajmni cheklash
+    if (strlen($avatar) > 120000) {
+        echo json_encode(['status'=>'error','message'=>'Rasm hajmi juda katta (max 80KB)']); exit;
+    }
+    $esc = mysqli_real_escape_string($conn, $avatar);
+    mysqli_query($conn, "UPDATE users SET avatar='$esc' WHERE id=$uid");
+    echo json_encode(['status'=>'ok']);
+    exit;
+}
+
+// ── Profil ma'lumotlari ──
+if ($action === 'get_profile') {
+    $uid  = (int)$_SESSION['user_id'];
+    $user = mysqli_fetch_assoc(mysqli_query($conn, "SELECT id, name, username, phone, avatar FROM users WHERE id=$uid LIMIT 1"));
+    $stats= mysqli_fetch_assoc(mysqli_query($conn,
+        "SELECT COUNT(*) as cnt, COALESCE(SUM(total_price),0) as total
+         FROM sales WHERE user_id=$uid AND source='mijoz'"));
+    echo json_encode(['status'=>'ok','user'=>$user,'stats'=>$stats]);
+    exit;
+}
+
 echo json_encode(['status'=>'error','message'=>'Noma\'lum so\'rov']);
