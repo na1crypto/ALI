@@ -1,7 +1,7 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
-require_once "../middleware/admin_check.php";
-require_once "../config/dokon_db.php";
+require_once __DIR__ . "/../middleware/admin_check.php";
+require_once __DIR__ . "/../config/dokon_db.php";
 
 $st        = mysqli_fetch_assoc(mysqli_query($conn,"SELECT store_name FROM settings WHERE id=1"));
 $site_name = $st['store_name'] ?? 'SMART POS';
@@ -170,7 +170,7 @@ body { font-family:'Inter',sans-serif; background:#F8FAFC; color:#0F172A; }
 </head>
 <body>
 
-<?php require_once "../includes/sidebar.php"; ?>
+<?php require_once __DIR__ . "/includes/sidebar.php"; ?>
 
 <div class="main-content" style="padding:24px 28px;min-height:100vh;">
 

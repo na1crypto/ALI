@@ -4,8 +4,8 @@ error_reporting(0);
 header('Content-Type: application/json; charset=utf-8');
 
 if (session_status() === PHP_SESSION_NONE) session_start();
-require_once "../middleware/admin_check.php";
-require_once "../config/dokon_db.php";
+require_once __DIR__ . "/../middleware/admin_check.php";
+require_once __DIR__ . "/../config/dokon_db.php";
 
 // Jadval yaratish (bir marta)
 mysqli_query($conn, "CREATE TABLE IF NOT EXISTS media_library (
