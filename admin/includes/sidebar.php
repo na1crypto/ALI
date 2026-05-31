@@ -362,6 +362,19 @@ body {
             <span class="item-label">Ombor</span>
         </a>
 
+        <!-- Rasm Kutubxonasi -->
+        <a href="<?= $admin_base ?>/media_library.php"
+           class="app-item <?= $active=='media'?'active':'' ?>">
+            <div class="item-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                </svg>
+            </div>
+            <span class="item-label">Rasm kutubxonasi</span>
+        </a>
+
         <!-- Savdo Tarixi -->
         <a href="<?= $admin_base ?>/sales_history.php"
            class="app-item <?= $active=='savdo'?'active':'' ?>">
