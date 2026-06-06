@@ -64,7 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['message'])) {
     // ==========================================
     // 3. CLAUDE API VA DINAMIK PROMPT
     // ==========================================
-    $apiKey = getenv('CLAUDE_API_KEY') ?: '';
+    $ck_r = mysqli_fetch_assoc(mysqli_query($conn, "SELECT claude_api_key FROM settings WHERE id=1"));
+    $apiKey = $ck_r['claude_api_key'] ?? getenv('CLAUDE_API_KEY') ?? '';
     $url    = "https://api.anthropic.com/v1/messages";
 
     $prompt = "Siz '{$store_name}' do'konining aqlli moliyaviy tahlilchisisiz. ".
