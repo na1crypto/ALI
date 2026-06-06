@@ -8,8 +8,8 @@ ini_set('display_errors', 0);
 
 define('BOT_TOKEN', '8694101598:AAE54kDSYsl4NaTxNA2bw73-4sN9Jq4xVmE');
 define('TG_API',    'https://api.telegram.org/bot'.BOT_TOKEN.'/');
-define('GEMINI_KEY','AIzaSyCqXMjQjdDCzIQf5qcaH25HqbqhC61czZg');
-define('GEMINI_URL','https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='.GEMINI_KEY);
+define('CLAUDE_KEY', getenv('CLAUDE_API_KEY') ?: '');
+define('CLAUDE_URL','https://api.anthropic.com/v1/messages');
 
 require_once __DIR__.'/../config/dokon_db.php';
 
@@ -285,19 +285,29 @@ function gemini_ask($question, $context, $store) {
               "Qisqa, aniq javob bering (2-3 jumla). Faqat o'zbek tilida. ".
               "Do'kon ma'lumotlari: $context. Savol: $question";
 
-    $ch = curl_init(GEMINI_URL);
+    $data = [
+        'model'      => 'claude-haiku-4-5',
+        'max_tokens' => 512,
+        'messages'   => [['role'=>'user','content'=>$prompt]],
+    ];
+
+    $ch = curl_init(CLAUDE_URL);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST           => true,
-        CURLOPT_POSTFIELDS     => json_encode(['contents'=>[['parts'=>[['text'=>$prompt]]]]]),
-        CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+        CURLOPT_POSTFIELDS     => json_encode($data),
+        CURLOPT_HTTPHEADER     => [
+            'x-api-key: '.CLAUDE_KEY,
+            'anthropic-version: 2023-06-01',
+            'content-type: application/json',
+        ],
         CURLOPT_SSL_VERIFYPEER => false,
-        CURLOPT_TIMEOUT        => 12,
+        CURLOPT_TIMEOUT        => 15,
     ]);
     $res = curl_exec($ch);
     curl_close($ch);
     $r = json_decode($res, true);
-    return $r['candidates'][0]['content']['parts'][0]['text']
+    return $r['content'][0]['text']
         ?? "Kechirasiz, hozir javob bera olmadim. /bugun /ombor /top buyruqlaridan foydalaning.";
 }
 
